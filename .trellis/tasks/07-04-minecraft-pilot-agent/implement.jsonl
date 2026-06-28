@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/index.md","reason":"Backend structure, database, errors, logging and quality conventions."}
+{"file":".trellis/spec/frontend/index.md","reason":"Jinja2 and browser UI structure, state and quality conventions."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"The same API and event schemas serve web, admin and the future Fabric client."}
+{"file":".trellis/tasks/07-04-minecraft-pilot-agent/research/technical-sources.md","reason":"Primary-source constraints for Minecraft 26.2, Fabric, DeepSeek, Qdrant and data distribution."}

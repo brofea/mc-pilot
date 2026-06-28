@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Backend typing, tests, boundaries and security checks."}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"Web behavior, accessibility and browser security checks."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Verify cross-layer schema consistency."}
+{"file":".trellis/tasks/07-04-minecraft-pilot-agent/research/technical-sources.md","reason":"Verify claims and dependency constraints."}

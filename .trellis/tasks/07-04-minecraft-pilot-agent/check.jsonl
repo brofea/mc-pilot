@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Verify backend tests, typing, boundaries and security expectations."}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"Verify web UI behavior, accessibility and client-side quality."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Verify schema consistency across backend, web, admin and future Fabric consumers."}
+{"file":".trellis/tasks/07-04-minecraft-pilot-agent/research/technical-sources.md","reason":"Check implementation claims against primary technical and distribution constraints."}
