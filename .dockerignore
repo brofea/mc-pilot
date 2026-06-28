@@ -1,0 +1,16 @@
+.git
+.agents
+.codex
+.trellis
+.venv
+.env
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+data
+models
+tests
+docs
+*.log
+*.egg-info

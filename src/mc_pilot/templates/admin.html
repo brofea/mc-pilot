@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero" aria-labelledby="admin-title">
+  <p class="eyebrow">Loopback-only diagnostics</p>
+  <h1 id="admin-title">开发者后台</h1>
+  <p>这里只展示脱敏配置和依赖就绪状态。</p>
+</section>
+<section class="dashboard-grid">
+  <article class="panel">
+    <h2>服务状态</h2>
+    <p class="status-pill" data-service-status>正在检查后端…</p>
+    <pre data-readiness-output aria-live="polite">等待健康检查</pre>
+  </article>
+  <article class="panel">
+    <h2>安全配置摘要</h2>
+    <dl class="config-list">
+      {% for key, value in settings.items() %}
+      <div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>
+      {% endfor %}
+    </dl>
+  </article>
+</section>
+{% endblock %}

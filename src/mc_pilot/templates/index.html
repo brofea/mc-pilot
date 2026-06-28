@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero" aria-labelledby="pilot-title">
+  <p class="eyebrow">Java Edition 26.2 · Web MVP</p>
+  <h1 id="pilot-title">你的本地 Minecraft Pilot</h1>
+  <p>工程骨架已经启动。Wiki、配方树和死亡建议将在后续里程碑逐步接入。</p>
+</section>
+<section class="panel" aria-labelledby="chat-title">
+  <div class="panel-heading">
+    <h2 id="chat-title">Pilot 对话</h2>
+    <span class="status-pill" data-service-status>正在检查后端…</span>
+  </div>
+  <ol class="chat-log" aria-live="polite">
+    <li class="pilot-message">Pilot 已就位。当前是 M1 基础设施模式。</li>
+  </ol>
+  <form class="chat-form">
+    <label for="pilot-input">消息</label>
+    <div class="input-row">
+      <input id="pilot-input" name="message" placeholder="后续可输入 /pilot …" disabled>
+      <button type="submit" disabled>发送</button>
+    </div>
+    <p class="field-note">对话功能将在 M4 启用。</p>
+  </form>
+</section>
+{% endblock %}

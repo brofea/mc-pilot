@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <title>{{ page_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/app.css') }}">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/">Minecraft Pilot</a>
+      <nav aria-label="主要导航">
+        <a href="/">助手</a>
+        <a href="/admin">开发者后台</a>
+      </nav>
+    </header>
+    <main>{% block content %}{% endblock %}</main>
+    <script type="module" src="{{ url_for('static', path='/js/status-stream.js') }}"></script>
+  </body>
+</html>
