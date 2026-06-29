@@ -3,7 +3,7 @@
   "name": "m4-agent",
   "title": "M4 DeepSeek Agent 与工具契约",
   "description": "Implement the DeepSeek client, MCP-style tool contracts, bounded agent state machine, short-term memory and usage budgets.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
