@@ -3,7 +3,7 @@
   "name": "m3-wiki-rag",
   "title": "M3 中文 Wiki RAG",
   "description": "Ingest the Chinese Minecraft Wiki through MediaWiki API, embed curated Java 26.2 knowledge, index Qdrant and return cited answers.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
