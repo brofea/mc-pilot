@@ -1,0 +1,94 @@
+{
+  "shaped_enchanting_table": {
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "key": {
+      "#": {"item": "minecraft:obsidian"},
+      "B": {"item": "minecraft:book"},
+      "D": {"item": "minecraft:diamond"}
+    },
+    "pattern": ["BBB", "#D#", "###"],
+    "result": {"id": "minecraft:enchanting_table", "count": 1},
+    "_file": "data/minecraft/recipe/enchanting_table.json"
+  },
+  "shaped_crafting_table": {
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "key": {
+      "#": {"tag": "minecraft:planks"}
+    },
+    "pattern": ["##", "##"],
+    "result": {"id": "minecraft:crafting_table", "count": 1},
+    "_file": "data/minecraft/recipe/crafting_table.json"
+  },
+  "shapeless_flint_and_steel": {
+    "type": "minecraft:crafting_shapeless",
+    "category": "equipment",
+    "ingredients": [
+      {"item": "minecraft:iron_ingot"},
+      {"item": "minecraft:flint"}
+    ],
+    "result": {"id": "minecraft:flint_and_steel", "count": 1},
+    "_file": "data/minecraft/recipe/flint_and_steel.json"
+  },
+  "shapeless_bookshelf": {
+    "type": "minecraft:crafting_shapeless",
+    "category": "building",
+    "group": "bookshelf",
+    "ingredients": [
+      {"tag": "minecraft:planks"},
+      {"tag": "minecraft:planks"},
+      {"tag": "minecraft:planks"},
+      {"item": "minecraft:book"},
+      {"item": "minecraft:book"},
+      {"item": "minecraft:book"}
+    ],
+    "result": {"id": "minecraft:bookshelf", "count": 1},
+    "_file": "data/minecraft/recipe/bookshelf.json"
+  },
+  "smelting_iron_ingot": {
+    "type": "minecraft:smelting",
+    "category": "misc",
+    "cookingtime": 200,
+    "experience": 0.7,
+    "ingredient": {"item": "minecraft:raw_iron"},
+    "result": {"id": "minecraft:iron_ingot"},
+    "_file": "data/minecraft/recipe/iron_ingot_from_smelting_raw_iron.json"
+  },
+  "stonecutting_quartz_slab": {
+    "type": "minecraft:stonecutting",
+    "ingredient": {"item": "minecraft:quartz_block"},
+    "result": {"id": "minecraft:quartz_slab", "count": 2},
+    "_file": "data/minecraft/recipe/quartz_slab_from_stonecutting.json"
+  },
+  "complex_fence_gate": {
+    "type": "minecraft:crafting_shaped",
+    "category": "redstone",
+    "key": {
+      "#": {"item": "minecraft:stick"},
+      "W": {"tag": "minecraft:planks"}
+    },
+    "pattern": ["#W#", "#W#"],
+    "result": {"id": "minecraft:oak_fence_gate", "count": 1},
+    "_file": "data/minecraft/recipe/oak_fence_gate.json"
+  },
+  "multi_output_pressure_plate": {
+    "type": "minecraft:crafting_shaped",
+    "category": "redstone",
+    "key": {
+      "#": {"tag": "minecraft:planks"}
+    },
+    "pattern": ["##"],
+    "result": {"id": "minecraft:oak_pressure_plate", "count": 1},
+    "_file": "data/minecraft/recipe/oak_pressure_plate.json"
+  },
+  "empty_pattern_recipe": {
+    "type": "minecraft:crafting_shaped",
+    "key": {
+      "A": {"item": "minecraft:iron_ingot"}
+    },
+    "pattern": [],
+    "result": {"id": "minecraft:iron_nugget", "count": 9},
+    "_file": "data/minecraft/recipe/iron_nugget_from_iron_ingot.json"
+  }
+}

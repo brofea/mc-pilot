@@ -3,7 +3,7 @@
   "name": "m2-recipes",
   "title": "M2 官方配方数据与配方树",
   "description": "Download and verify the official Java 26.2 release, extract recipes/tags/localization, store them, and compute deterministic N-level recipe trees.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
