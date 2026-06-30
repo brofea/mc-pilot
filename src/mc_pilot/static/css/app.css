@@ -20,25 +20,49 @@ main { width: min(100% - 2rem, 70rem); margin: 0 auto; padding: 3rem 0 5rem; }
 .hero { max-width: 48rem; margin-bottom: 2rem; }
 .hero h1 { font-size: clamp(2rem, 7vw, 4.5rem); line-height: 1; margin: .5rem 0 1rem; }
 .hero p { color: var(--muted); line-height: 1.65; }
+.hero code { background: var(--panel-soft); padding: .15rem .4rem; border-radius: .3rem; font-size: .9em; }
 .eyebrow { color: var(--accent) !important; font-size: .8rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+
 .panel { background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--border); border-radius: 1rem; padding: 1.25rem; box-shadow: 0 1rem 3rem #0004; }
-.panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.panel-heading { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; }
+
 .status-pill { display: inline-flex; width: fit-content; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); padding: .35rem .7rem; font-size: .82rem; }
 .status-pill[data-state="ready"] { border-color: #4d8f5b; color: var(--accent); }
 .status-pill[data-state="degraded"] { border-color: #b78b41; color: #ffd484; }
-.chat-log { min-height: 10rem; margin: 1.5rem 0; padding: 0; list-style: none; }
-.pilot-message { max-width: 38rem; background: var(--panel-soft); border-radius: .75rem .75rem .75rem .15rem; padding: .9rem 1rem; }
+.status-pill[data-state="connecting"] { border-color: #5a8faa; color: #9ad0f5; }
+
+.chat-log { min-height: 12rem; max-height: 50vh; overflow-y: auto; margin: 1.5rem 0; padding: 0; list-style: none; }
+.chat-log li { margin-bottom: .75rem; }
+.pilot-message { max-width: 42rem; background: var(--panel-soft); border-radius: .75rem .75rem .75rem .15rem; padding: .9rem 1rem; }
+.pilot-message code { background: #0c130e; padding: .15rem .4rem; border-radius: .25rem; }
+.user-message { max-width: 42rem; background: #1a3520; border-radius: .75rem .75rem .15rem .75rem; padding: .9rem 1rem; margin-left: auto; text-align: right; }
+
 .chat-form label { display: block; margin-bottom: .5rem; font-weight: 700; }
 .input-row { display: grid; grid-template-columns: 1fr auto; gap: .6rem; }
 input, button { border: 1px solid var(--border); border-radius: .6rem; padding: .8rem; font: inherit; }
 input { background: #0c130e; color: var(--text); }
-button { background: var(--accent); color: #08100a; font-weight: 800; }
+button { background: var(--accent); color: #08100a; font-weight: 800; cursor: pointer; }
 button:disabled, input:disabled { cursor: not-allowed; opacity: .55; }
-.field-note { color: var(--muted); font-size: .85rem; }
+.small-btn { padding: .5rem 1rem; font-size: .85rem; }
+button.secondary { background: var(--panel-soft); color: var(--text); }
+
+.death-bubble { position: fixed; top: 5rem; right: 1rem; max-width: 22rem; background: #2a1a1a; border: 1px solid #8b3a3a; border-radius: .75rem; padding: 1rem; z-index: 100; transition: opacity .5s; box-shadow: 0 .5rem 2rem #0008; }
+.death-bubble strong { color: #ff6b6b; }
+
+.main-layout { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+@media (min-width: 64rem) { .main-layout { grid-template-columns: 1fr 1fr; } }
+.recipe-panel { overflow-y: auto; max-height: 80vh; }
+.recipe-content { font-size: .9rem; line-height: 1.6; }
+
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; }
+.kv-list div { display: grid; grid-template-columns: 1fr 1.3fr; gap: 1rem; padding: .55rem 0; border-bottom: 1px solid var(--border); }
+.kv-list dt { color: var(--muted); }
+.kv-list dd { margin: 0; overflow-wrap: anywhere; }
+
+.action-group { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+.diag-output { white-space: pre-wrap; color: var(--muted); font-size: .85rem; min-height: 3rem; background: #0c130e; border-radius: .5rem; padding: .75rem; }
+
 pre { white-space: pre-wrap; color: var(--muted); }
-.config-list div { display: grid; grid-template-columns: 1fr 1.3fr; gap: 1rem; padding: .55rem 0; border-bottom: 1px solid var(--border); }
-.config-list dt { color: var(--muted); }
-.config-list dd { margin: 0; overflow-wrap: anywhere; }
+
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }

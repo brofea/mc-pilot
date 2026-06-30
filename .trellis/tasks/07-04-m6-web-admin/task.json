@@ -3,7 +3,7 @@
   "name": "m6-web-admin",
   "title": "M6 网页与开发者后台",
   "description": "Build the chat UI, recipe tree view, transient death messages and loopback-only diagnostics dashboard.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

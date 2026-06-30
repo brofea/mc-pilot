@@ -16,6 +16,6 @@
       </nav>
     </header>
     <main>{% block content %}{% endblock %}</main>
-    <script type="module" src="{{ url_for('static', path='/js/status-stream.js') }}"></script>
+    {% block scripts %}{% endblock %}
   </body>
 </html>

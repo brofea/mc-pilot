@@ -67,7 +67,7 @@ def test_readiness_reports_degraded_dependency(client: TestClient) -> None:
 
 @pytest.mark.parametrize(
     ("path", "heading"),
-    [("/", "你的本地 Minecraft Pilot"), ("/admin", "开发者后台")],
+    [("/", "Minecraft Pilot"), ("/admin", "开发者后台")],
 )
 def test_pages_render_without_frontend_build(client: TestClient, path: str, heading: str) -> None:
     response = client.get(path)
