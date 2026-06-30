@@ -3,7 +3,7 @@
   "name": "m5-game-log",
   "title": "M5 游戏日志与死亡建议",
   "description": "Detect the local Java 26.2 session, tail latest.log, identify the player, parse zh_cn/en_us deaths and emit one concise DeepSeek suggestion.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
