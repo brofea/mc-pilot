@@ -35,7 +35,7 @@ def create_chat_router(agent_service: AgentService) -> APIRouter:
             "stop_reason": result.stop_reason,
         }
 
-    @router.get("/api/agent-status")
+    @router.get("/agent-status")
     async def agent_status(request: Request) -> dict[str, object]:
         return {"configured": agent_service.is_configured()}
 

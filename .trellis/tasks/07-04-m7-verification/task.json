@@ -3,7 +3,7 @@
   "name": "m7-verification",
   "title": "M7 测试与验收交付",
   "description": "Complete the focused automated tests, real-model smoke tests, Docker/macOS verification, README and reproducible evidence.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
