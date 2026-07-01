@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+from ipaddress import ip_address
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -14,8 +15,21 @@ logger = logging.getLogger(__name__)
 
 
 def _require_loopback(request: Request) -> None:
-    host = request.client.host if request.client else ""
-    if host not in ("127.0.0.1", "::1", "localhost"):
+    client_host = request.client.host if request.client else ""
+    request_host = request.url.hostname or ""
+
+    if request_host not in ("127.0.0.1", "::1", "localhost", "testserver"):
+        raise HTTPException(status_code=403, detail="仅允许本机访问")
+
+    try:
+        source = ip_address(client_host)
+    except ValueError:
+        if client_host != "testclient":
+            raise HTTPException(status_code=403, detail="仅允许本机访问") from None
+        return
+
+    # Docker Desktop forwards a host-loopback request through its private gateway.
+    if not (source.is_loopback or source.is_private):
         raise HTTPException(status_code=403, detail="仅允许本机访问")
 
 

@@ -33,9 +33,9 @@ main { width: min(100% - 2rem, 70rem); margin: 0 auto; padding: 3rem 0 5rem; }
 
 .chat-log { min-height: 12rem; max-height: 50vh; overflow-y: auto; margin: 1.5rem 0; padding: 0; list-style: none; }
 .chat-log li { margin-bottom: .75rem; }
-.pilot-message { max-width: 42rem; background: var(--panel-soft); border-radius: .75rem .75rem .75rem .15rem; padding: .9rem 1rem; }
+.pilot-message { max-width: 42rem; background: var(--panel-soft); border-radius: .75rem .75rem .75rem .15rem; padding: .9rem 1rem; white-space: pre-wrap; }
 .pilot-message code { background: #0c130e; padding: .15rem .4rem; border-radius: .25rem; }
-.user-message { max-width: 42rem; background: #1a3520; border-radius: .75rem .75rem .15rem .75rem; padding: .9rem 1rem; margin-left: auto; text-align: right; }
+.user-message { max-width: 42rem; background: #1a3520; border-radius: .75rem .75rem .15rem .75rem; padding: .9rem 1rem; margin-left: auto; text-align: right; white-space: pre-wrap; }
 
 .chat-form label { display: block; margin-bottom: .5rem; font-weight: 700; }
 .input-row { display: grid; grid-template-columns: 1fr auto; gap: .6rem; }
@@ -46,7 +46,7 @@ button:disabled, input:disabled { cursor: not-allowed; opacity: .55; }
 .small-btn { padding: .5rem 1rem; font-size: .85rem; }
 button.secondary { background: var(--panel-soft); color: var(--text); }
 
-.death-bubble { position: fixed; top: 5rem; right: 1rem; max-width: 22rem; background: #2a1a1a; border: 1px solid #8b3a3a; border-radius: .75rem; padding: 1rem; z-index: 100; transition: opacity .5s; box-shadow: 0 .5rem 2rem #0008; }
+.death-bubble { position: fixed; top: 5rem; right: 1rem; max-width: 22rem; background: #2a1a1a; border: 1px solid #8b3a3a; border-radius: .75rem; padding: 1rem; z-index: 100; transition: opacity .5s; box-shadow: 0 .5rem 2rem #0008; white-space: pre-wrap; }
 .death-bubble strong { color: #ff6b6b; }
 
 .main-layout { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }

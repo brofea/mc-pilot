@@ -7,10 +7,23 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY pyproject.toml README.md ./
-COPY src ./src
 
 RUN python -m pip install --root-user-action=ignore --upgrade pip \
-    && python -m pip install --root-user-action=ignore .
+    && python -m pip install --root-user-action=ignore \
+        --index-url https://download.pytorch.org/whl/cpu \
+        torch==2.12.1 \
+    && python -m pip install --root-user-action=ignore \
+        fastapi==0.116.1 \
+        jinja2==3.1.6 \
+        pydantic-settings==2.10.1 \
+        qdrant-client==1.15.1 \
+        'sentence-transformers>=3.0,<4' \
+        sqlalchemy==2.0.43 \
+        'uvicorn[standard]==0.35.0'
+
+COPY src ./src
+
+RUN python -m pip install --root-user-action=ignore --no-deps .
 
 RUN addgroup --system app \
     && adduser --system --ingroup app app \

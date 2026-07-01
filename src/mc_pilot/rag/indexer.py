@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import TypeGuard
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
@@ -20,6 +21,12 @@ logger = logging.getLogger(__name__)
 COLLECTION_BASE = "mc_wiki"
 VECTOR_SIZE = 512
 BATCH_SIZE = 100
+
+
+def _is_dense_vector(value: object) -> TypeGuard[list[int | float]]:
+    return isinstance(value, list) and all(
+        isinstance(element, int | float) for element in value
+    )
 
 
 class WikiIndexer:
@@ -145,11 +152,11 @@ class WikiIndexer:
             if not records:
                 break
             for rec in records:
-                vec: list[float] = (
-                    rec.vector  # type: ignore[assignment]
-                    if rec.vector is not None
-                    else [0.0] * self._embedder.dimension
-                )
+                raw_vector = rec.vector
+                if _is_dense_vector(raw_vector):
+                    vec = [float(value) for value in raw_vector]
+                else:
+                    vec = [0.0] * self._embedder.dimension
                 points.append(
                     PointStruct(
                         id=rec.id,

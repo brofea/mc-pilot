@@ -63,8 +63,11 @@ def create_game_router(game_service: GameStateService) -> APIRouter:
                 if data == "ping":
                     await websocket.send_json({"type": "pong"})
         except WebSocketDisconnect:
-            state.web_socket_clients = max(0, state.web_socket_clients - 1)
+            pass
         except Exception:
+            logger.warning("game_websocket_failed", exc_info=True)
+        finally:
             state.web_socket_clients = max(0, state.web_socket_clients - 1)
+            game_service.remove_advice_callback(on_advice)
 
     return router

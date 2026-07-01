@@ -125,7 +125,7 @@ def parse_death(
                 timestamp=timestamp,
                 source="en_us",
                 confidence=0.95,
-                event_id=DeathEvent.build_event_id(player_name, msg, timestamp),
+                event_id=DeathEvent.build_event_id(player_name, line),
             )
 
     for category, pattern in _ZH_PATTERNS:
@@ -141,7 +141,7 @@ def parse_death(
                 timestamp=timestamp,
                 source="zh_cn",
                 confidence=0.95,
-                event_id=DeathEvent.build_event_id(player_name, msg, timestamp),
+                event_id=DeathEvent.build_event_id(player_name, line),
             )
 
     if player_name in msg and any(
@@ -155,7 +155,7 @@ def parse_death(
             timestamp=timestamp,
             source="unknown",
             confidence=0.3,
-            event_id=DeathEvent.build_event_id(player_name, msg, timestamp),
+            event_id=DeathEvent.build_event_id(player_name, line),
         )
 
     return None

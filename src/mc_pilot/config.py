@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     sqlite_url: str = "sqlite:///data/mc_pilot.db"
     qdrant_url: str = "http://localhost:6333"
     qdrant_timeout_seconds: int = Field(default=2, gt=0, le=30)
+    game_log_path: str = ""
 
     deepseek_api_key: SecretStr | None = Field(default=None, validation_alias="DEEPSEEK_API_KEY")
     deepseek_base_url: str = Field(
@@ -46,6 +47,7 @@ class Settings(BaseSettings):
             "sqlite_backend": self.sqlite_url.split(":", maxsplit=1)[0],
             "qdrant_url": self.qdrant_url,
             "qdrant_timeout_seconds": self.qdrant_timeout_seconds,
+            "game_log_configured": bool(self.game_log_path),
             "deepseek_configured": bool(
                 self.deepseek_api_key and self.deepseek_api_key.get_secret_value()
             ),

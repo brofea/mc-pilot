@@ -10,6 +10,7 @@ These rules govern the Python 3.12 FastAPI backend, data pipelines, agent runtim
 4. Read [Quality](./quality-guidelines.md) before adding dependencies or tests.
 5. Read the shared cross-layer guide when a schema is consumed by web, admin, or Fabric.
 6. Read [Foundation Runtime Contracts](./foundation-contracts.md) for startup, health, settings, Docker, SQLite, or Qdrant changes.
+7. Read [Game Runtime Contracts](./game-runtime-contracts.md) for log listening, WebSocket, Docker host mounts, admin loopback, or Fabric changes.
 
 ## Quality Check
 
@@ -28,3 +29,4 @@ These rules govern the Python 3.12 FastAPI backend, data pipelines, agent runtim
 | [Logging](./logging-guidelines.md) | Structured, redacted telemetry |
 | [Quality](./quality-guidelines.md) | Typing, tests, dependencies and review |
 | [Foundation Contracts](./foundation-contracts.md) | Executable startup, health, settings and Docker contracts |
+| [Game Runtime Contracts](./game-runtime-contracts.md) | Log lifecycle, death delivery, Docker host access and Fabric 26.2 |

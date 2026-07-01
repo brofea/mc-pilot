@@ -40,6 +40,7 @@ python3 -m venv .venv
 # 3. 配置 API 密钥
 cp .env.example .env
 # 编辑 .env，将 DEEPSEEK_API_KEY= 后面填上你的 DeepSeek API 密钥
+# macOS 使用 Docker 时，将 MC_PILOT_MINECRAFT_DIR 改为当前用户的 Minecraft 目录
 # 获取密钥: https://platform.deepseek.com/api_keys
 ```
 
@@ -322,6 +323,8 @@ http://127.0.0.1:8000/admin → 重连日志
 | `MC_PILOT_SQLITE_URL` | `sqlite:///data/mc_pilot.db` | SQLite 数据库路径 |
 | `MC_PILOT_QDRANT_URL` | `http://localhost:6333` | Qdrant 服务地址 |
 | `MC_PILOT_QDRANT_TIMEOUT_SECONDS` | `2` | Qdrant 连接超时 |
+| `MC_PILOT_MINECRAFT_DIR` | macOS 默认游戏目录 | Docker 只读挂载的宿主机 Minecraft 目录 |
+| `MC_PILOT_GAME_LOG_PATH` | 自动检测 | 原生运行时可覆盖的 `latest.log` 路径 |
 | `DEEPSEEK_API_KEY` | — | DeepSeek API 密钥 (**必需**) |
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | API 基础 URL |
 | `DEEPSEEK_MODEL` | `deepseek-v4-flash` | 模型标识符 |
@@ -329,6 +332,8 @@ http://127.0.0.1:8000/admin → 重连日志
 **获取 API 密钥**：https://platform.deepseek.com/api_keys
 
 复制 `.env.example` → `.env`，填入 `DEEPSEEK_API_KEY=` 后面的值。
+Docker Compose 会将 `MC_PILOT_MINECRAFT_DIR` 只读挂载到容器。目录或
+`logs/latest.log` 暂不存在时，日志分析保持未连接，聊天、Wiki 和配方仍可使用。
 
 ---
 

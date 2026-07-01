@@ -11,11 +11,15 @@ const recipeCloseBtn = document.getElementById("recipe-close-btn");
 
 let ws = null;
 let deathTimer = null;
+let reconnectTimer = null;
+let reconnectAttempts = 0;
+let shuttingDown = false;
+const MAX_RECONNECT_ATTEMPTS = 8;
 
 function addMessage(role, text) {
   const li = document.createElement("li");
   li.className = role === "user" ? "user-message" : "pilot-message";
-  li.innerHTML = text.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  li.textContent = String(text);
   chatLog.appendChild(li);
   chatLog.scrollTop = chatLog.scrollHeight;
 }
@@ -51,7 +55,12 @@ async function sendMessage(message) {
 }
 
 function showDeathBubble(advice) {
-  deathBubble.innerHTML = "<strong>死亡事件</strong><br>" + advice.advice.replace(/\n/g, "<br>");
+  deathBubble.replaceChildren();
+  const heading = document.createElement("strong");
+  heading.textContent = "死亡事件";
+  const message = document.createElement("span");
+  message.textContent = String(advice.advice);
+  deathBubble.append(heading, document.createElement("br"), message);
   deathBubble.hidden = false;
   if (deathTimer) clearTimeout(deathTimer);
   deathTimer = setTimeout(() => {
@@ -61,16 +70,49 @@ function showDeathBubble(advice) {
 }
 
 function connectWebSocket() {
+  if (shuttingDown || ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) {
+    return;
+  }
   const proto = location.protocol === "https:" ? "wss:" : "ws:";
   ws = new WebSocket(proto + "//" + location.host + "/ws");
-  ws.onopen = () => updateApiStatus("ready", "已连接");
-  ws.onclose = () => { updateApiStatus("degraded", "断开"); setTimeout(connectWebSocket, 3000); };
+  ws.onopen = () => {
+    reconnectAttempts = 0;
+    updateApiStatus("ready", "已连接");
+  };
+  ws.onclose = () => {
+    ws = null;
+    updateApiStatus("degraded", "断开");
+    scheduleReconnect();
+  };
   ws.onerror = () => updateApiStatus("degraded", "连接错误");
   ws.onmessage = (e) => {
-    const data = JSON.parse(e.data);
-    if (data.type === "death_advice") showDeathBubble(data);
-    if (data.type === "state") updateGameStatus(data);
+    try {
+      const data = JSON.parse(e.data);
+      if (isDeathAdvice(data)) showDeathBubble(data);
+      else if (isStateEvent(data)) updateGameStatus(data);
+      else if (data?.type !== "pong") updateApiStatus("degraded", "消息格式错误");
+    } catch (_error) {
+      updateApiStatus("degraded", "消息格式错误");
+    }
   };
+}
+
+function scheduleReconnect() {
+  if (shuttingDown || reconnectTimer || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) return;
+  const delay = Math.min(1000 * (2 ** reconnectAttempts), 30000);
+  reconnectAttempts += 1;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connectWebSocket();
+  }, delay);
+}
+
+function isDeathAdvice(data) {
+  return data?.type === "death_advice" && typeof data.advice === "string";
+}
+
+function isStateEvent(data) {
+  return data?.type === "state" && typeof data.state === "string";
 }
 
 function updateApiStatus(state, label) {
@@ -113,3 +155,9 @@ async function checkHealth() {
 
 checkHealth();
 connectWebSocket();
+
+window.addEventListener("pagehide", () => {
+  shuttingDown = true;
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  ws?.close();
+});

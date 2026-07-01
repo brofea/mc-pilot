@@ -56,6 +56,12 @@ def extract_version_from_log(lines: list[str]) -> str | None:
 def extract_player_from_log(lines: list[str]) -> str | None:
     """Scan log lines for the local player name."""
     for line in lines:
+        marker = "Setting user: "
+        if marker in line:
+            player = line.split(marker, 1)[1].strip().split()[0]
+            if player:
+                return player
+    for line in lines:
         lowered = line.lower()
         if ("joined the game" in lowered or "joined the world" in lowered) and "]: " in line:
             msg_part = line.split("]: ", 1)[1] if "]: " in line else line

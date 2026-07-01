@@ -16,6 +16,7 @@ from fastapi.templating import Jinja2Templates
 
 from mc_pilot import __version__
 from mc_pilot.admin.routes import create_admin_router
+from mc_pilot.agent.client import DeepSeekClient
 from mc_pilot.agent.service import AgentService
 from mc_pilot.api.chat import create_chat_router
 from mc_pilot.api.game_state import create_game_router
@@ -59,7 +60,20 @@ def _build_services(settings: Settings, sqlite_engine: Any) -> dict[str, Any]:
         wiki_service=services["wiki"],
     )
 
-    services["game"] = GameStateService()
+    death_client = (
+        DeepSeekClient(
+            base_url=settings.deepseek_base_url,
+            api_key=api_key,
+            model=settings.deepseek_model,
+            max_tokens=200,
+        )
+        if api_key
+        else None
+    )
+    services["game"] = GameStateService(
+        deepseek_client=death_client,
+        configured_log_path=settings.game_log_path,
+    )
 
     return services
 
@@ -80,11 +94,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         initialize_database(sqlite_engine)
+        await services["game"].start()
         logger.info("application_started", extra={"version": __version__})
-        yield
-        qdrant_probe.close()
-        sqlite_engine.dispose()
-        logger.info("application_stopped")
+        try:
+            yield
+        finally:
+            await services["game"].stop()
+            qdrant_probe.close()
+            sqlite_engine.dispose()
+            logger.info("application_stopped")
 
     app = FastAPI(
         title="Minecraft Pilot API",

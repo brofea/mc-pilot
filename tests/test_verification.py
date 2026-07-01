@@ -42,17 +42,21 @@ def test_agent_status_route(client: TestClient) -> None:
 
 def test_admin_status_route(client: TestClient) -> None:
     resp = client.get("/admin/api/status")
-    assert resp.status_code in (200, 403)
-    if resp.status_code == 200:
-        assert "version" in resp.json()
+    assert resp.status_code == 200
+    assert "version" in resp.json()
+
+
+def test_admin_rejects_non_loopback_host(client: TestClient) -> None:
+    resp = client.get("http://example.com/admin/api/status")
+    assert resp.status_code == 403
 
 
 def test_admin_config_route_does_not_leak_secret(client: TestClient) -> None:
     resp = client.get("/admin/api/config")
-    if resp.status_code == 200:
-        data = resp.json()
-        for val in data.values():
-            assert "sk-test" not in str(val)
+    assert resp.status_code == 200
+    data = resp.json()
+    for val in data.values():
+        assert "sk-test" not in str(val)
 
 
 # ── Config redaction tests ──────────────────────────────────────────────
@@ -149,6 +153,16 @@ def test_docker_compose_config_is_valid() -> None:
     content = compose_path.read_text()
     assert "qdrant" in content
     assert "127.0.0.1" in content
+    assert "read_only: true" in content
+    assert "MC_PILOT_GAME_LOG_PATH: /minecraft/logs/latest.log" in content
+
+
+def test_browser_scripts_do_not_render_external_content_with_inner_html() -> None:
+    static_dir = Path(__file__).parent.parent / "src" / "mc_pilot" / "static" / "js"
+    for script_name in ("chat.js", "admin.js"):
+        content = (static_dir / script_name).read_text(encoding="utf-8")
+        assert ".innerHTML" not in content
+        assert "textContent" in content
 
 
 # ── Degradation states ──────────────────────────────────────────────────

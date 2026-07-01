@@ -54,6 +54,11 @@ class GameLogListener:
     def state(self) -> GameState:
         return self._state
 
+    @property
+    def advice_enabled(self) -> bool:
+        """Whether valid deaths can be sent to the configured model."""
+        return self._deepseek is not None
+
     def set_log_path(self, path: str) -> None:
         from pathlib import Path
 
@@ -114,6 +119,7 @@ class GameLogListener:
                 detected = extract_player_from_log([line])
                 if detected:
                     self._state.player_name = detected
+                    player = detected
                     self._state.state = GameConnectionState.connected
                     logger.info("Player detected", extra={"player": detected})
 

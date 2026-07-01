@@ -10,10 +10,14 @@ const panels = {
 
 function renderKV(el, data) {
   if (!el) return;
-  el.innerHTML = "";
+  el.replaceChildren();
   for (const [k, v] of Object.entries(data || {})) {
     const div = document.createElement("div");
-    div.innerHTML = "<dt>" + k + "</dt><dd>" + (v ?? "—") + "</dd>";
+    const term = document.createElement("dt");
+    const detail = document.createElement("dd");
+    term.textContent = k;
+    detail.textContent = String(v ?? "—");
+    div.append(term, detail);
     el.appendChild(div);
   }
 }

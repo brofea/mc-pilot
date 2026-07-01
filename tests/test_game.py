@@ -5,6 +5,11 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from mc_pilot.app import create_app
+from mc_pilot.config import Settings
 from mc_pilot.game.death_parser import parse_death
 from mc_pilot.game.detector import (
     extract_player_from_log,
@@ -223,6 +228,11 @@ def test_extract_player_none() -> None:
     assert player is None
 
 
+def test_extract_player_from_client_setting() -> None:
+    lines = ["[09:00:00] [Render thread/INFO]: Setting user: LocalSteve"]
+    assert extract_player_from_log(lines) == "LocalSteve"
+
+
 def test_extract_player_chinese_name() -> None:
     lines = [
         "[09:00:10] [Server thread/INFO]: 我的世界玩家 joined the game",
@@ -244,8 +254,58 @@ def test_death_event_deduplication() -> None:
     assert e1 != e3
 
 
+def test_repeated_log_line_has_stable_event_id() -> None:
+    line = "[10:00:00] [Server thread/INFO]: Player fell from a high place"
+    first = parse_death(line, "Player", datetime(2026, 1, 1, tzinfo=UTC))
+    second = parse_death(line, "Player", datetime(2026, 1, 2, tzinfo=UTC))
+    assert first is not None and second is not None
+    assert first.event_id == second.event_id
+
+
 def test_game_state_defaults() -> None:
     state = GameState()
     assert state.state == "disconnected"
     assert state.death_count == 0
     assert state.player_name == ""
+
+
+def test_app_lifespan_starts_and_stops_configured_listener(tmp_path: Path) -> None:
+    log_file = tmp_path / "latest.log"
+    log_file.write_text("[Render thread/INFO]: Minecraft 26.2\n", encoding="utf-8")
+    settings = Settings(
+        _env_file=None,
+        sqlite_url=f"sqlite:///{tmp_path / 'app.db'}",
+        qdrant_url="http://127.0.0.1:1",
+        game_log_path=str(log_file),
+        DEEPSEEK_API_KEY="sk-test",
+    )
+    app = create_app(settings)
+    game_service = app.state.services["game"]
+
+    assert game_service.is_running is False
+    with TestClient(app):
+        assert game_service.is_running is True
+        assert game_service.advice_enabled is True
+    assert game_service.is_running is False
+
+
+def test_app_without_api_key_disables_death_advice(tmp_path: Path) -> None:
+    settings = Settings(
+        _env_file=None,
+        sqlite_url=f"sqlite:///{tmp_path / 'app.db'}",
+        qdrant_url="http://127.0.0.1:1",
+    )
+    app = create_app(settings)
+
+    assert app.state.services["game"].advice_enabled is False
+
+
+def test_websocket_disconnect_removes_advice_callback(client: TestClient) -> None:
+    assert isinstance(client.app, FastAPI)
+    game_service = client.app.state.services["game"]
+    assert game_service.advice_subscriber_count == 0
+    with client.websocket_connect("/ws") as websocket:
+        websocket.send_text("ping")
+        assert websocket.receive_json() == {"type": "pong"}
+        assert game_service.advice_subscriber_count == 1
+    assert game_service.advice_subscriber_count == 0
