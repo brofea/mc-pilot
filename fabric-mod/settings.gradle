@@ -1,0 +1,24 @@
+pluginManagement {
+    repositories {
+        maven {
+            name "Fabric"
+            url "https://maven.fabricmc.net/"
+        }
+        maven {
+            name "AliyunPublic"
+            url "https://maven.aliyun.com/repository/public"
+        }
+        maven {
+            name "AliyunCentral"
+            url "https://maven.aliyun.com/repository/central"
+        }
+        maven {
+            name "AliyunGradlePlugin"
+            url "https://maven.aliyun.com/repository/gradle-plugin"
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = "pilot-mod"

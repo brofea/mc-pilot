@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "pilot-mod",
+  "version": "${version}",
+  "name": "Minecraft Pilot Mod",
+  "description": "Local Fabric 26.2 client that connects to the Pilot Agent backend for Wiki, recipe, and agent queries.",
+  "authors": ["brofea"],
+  "contact": {},
+  "license": "MIT",
+  "icon": null,
+  "environment": "client",
+  "entrypoints": {
+    "client": ["mc.pilot.mod.PilotMod"]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
