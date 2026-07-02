@@ -155,6 +155,13 @@ def test_docker_compose_config_is_valid() -> None:
     assert "127.0.0.1" in content
     assert "read_only: true" in content
     assert "MC_PILOT_GAME_LOG_PATH: /minecraft/logs/latest.log" in content
+    assert "HF_HOME: /app/data/models" in content
+
+
+def test_docker_image_contains_operator_scripts() -> None:
+    dockerfile = Path(__file__).parent.parent / "Dockerfile"
+    content = dockerfile.read_text(encoding="utf-8")
+    assert "COPY scripts ./scripts" in content
 
 
 def test_browser_scripts_do_not_render_external_content_with_inner_html() -> None:

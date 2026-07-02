@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 
 RUN python -m pip install --root-user-action=ignore --upgrade pip \
     && python -m pip install --root-user-action=ignore \
@@ -21,7 +21,9 @@ RUN python -m pip install --root-user-action=ignore --upgrade pip \
         sqlalchemy==2.0.43 \
         'uvicorn[standard]==0.35.0'
 
+COPY README.md ./
 COPY src ./src
+COPY scripts ./scripts
 
 RUN python -m pip install --root-user-action=ignore --no-deps .
 

@@ -30,7 +30,7 @@ Readiness always names each dependency and may degrade without killing the proce
 
 Environment keys use the `MC_PILOT_` prefix. DeepSeek compatibility keys remain `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, and `DEEPSEEK_MODEL`. `Settings.safe_summary()` is the only settings representation allowed in HTML/admin responses.
 
-Docker publishes app/Qdrant only on `127.0.0.1`, persists named volumes, and never copies `.env`, project data, Trellis/Codex metadata, tests, or model/game files into the image.
+Docker publishes app/Qdrant only on `127.0.0.1`, persists named volumes, and never copies `.env`, project data, Trellis/Codex metadata, tests, or model/game files into the image. The application image includes `scripts/` so operators can build recipe and Wiki data without a host Python environment. Compose sets `HF_HOME=/app/data/models`; that path shares the persistent `app-data` volume with generated SQLite data.
 
 ## 4. Validation & Error Matrix
 
@@ -42,12 +42,14 @@ Docker publishes app/Qdrant only on `127.0.0.1`, persists named volumes, and nev
 | Secret configured | admin shows only `deepseek_configured: true` |
 | Invalid port/timeout | Settings validation fails before application startup |
 | App domain failure | standard `{"error": ...}` envelope with request ID |
+| Container data build requested | `scripts/build_recipes.py` and `scripts/build_wiki.py` are present in the app image |
+| Embedding model downloaded | cache is written below `/app/data/models`, not an ephemeral image layer |
 
 ## 5. Good / Base / Bad Cases
 
 - Good: Docker Compose starts app and Qdrant; readiness reports both `ready`.
 - Base: local app starts without Qdrant; pages render and readiness reports one degraded component.
-- Bad: a route serializes `Settings` directly, a dependency exception becomes a raw 500 body, or Compose binds `0.0.0.0` on the host.
+- Bad: a route serializes `Settings` directly, a dependency exception becomes a raw 500 body, Compose binds `0.0.0.0` on the host, or the documented container data-build commands reference scripts absent from the image.
 
 ## 6. Tests Required
 
@@ -55,6 +57,7 @@ Docker publishes app/Qdrant only on `127.0.0.1`, persists named volumes, and nev
 - Assert degraded readiness has stable component fields and safe details.
 - Assert `/` and `/admin` render without a frontend build.
 - Assert `safe_summary()` never contains a configured secret.
+- Assert the Dockerfile copies `scripts/` and Compose maps `HF_HOME` below the persistent application-data volume.
 - Validate Compose configuration and run the container readiness endpoint before closing an infrastructure milestone.
 
 ## 7. Wrong vs Correct
@@ -72,4 +75,17 @@ Correct: the application factory owns dependencies and routes consume narrow typ
 
 ```python
 qdrant_ready = await run_in_threadpool(request.app.state.qdrant_probe.is_ready)
+```
+
+Wrong: document `docker compose run ... python scripts/build_wiki.py` while omitting `scripts/` from the image, or leave the Hugging Face cache in an ephemeral container path.
+
+Correct: copy operator scripts after the dependency layer and point the model cache at the named application-data volume.
+
+```dockerfile
+COPY scripts ./scripts
+```
+
+```yaml
+environment:
+  HF_HOME: /app/data/models
 ```
