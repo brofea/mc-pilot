@@ -2,7 +2,7 @@ package mc.pilot.mod;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import org.slf4j.Logger;
@@ -30,7 +30,7 @@ public class PilotMod implements ClientModInitializer {
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(
-                ClientCommandManager.literal("pilot")
+                ClientCommands.literal("pilot")
                     .executes(ctx -> {
                         ChatRenderer.addLocalMessage(
                             PilotCommandHandler.route(client, "")
@@ -38,7 +38,7 @@ public class PilotMod implements ClientModInitializer {
                         return 1;
                     })
                     .then(
-                        ClientCommandManager.argument("text", StringArgumentType.greedyString())
+                        ClientCommands.argument("text", StringArgumentType.greedyString())
                             .executes(ctx -> {
                                 String text = StringArgumentType.getString(ctx, "text");
                                 String local = PilotCommandHandler.route(client, "/pilot " + text);
