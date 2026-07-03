@@ -2,32 +2,106 @@ const chatLog = document.getElementById("chat-log");
 const chatForm = document.getElementById("chat-form");
 const pilotInput = document.getElementById("pilot-input");
 const sendBtn = document.getElementById("send-btn");
-const deathBubble = document.getElementById("death-bubble");
-const gameStatus = document.getElementById("game-status");
-const apiStatus = document.getElementById("api-status");
-const recipeSection = document.getElementById("recipe-section");
-const recipeContent = document.getElementById("recipe-content");
-const recipeCloseBtn = document.getElementById("recipe-close-btn");
+const newChatBtn = document.getElementById("new-chat-btn");
+const deathToast = document.getElementById("death-toast");
+const deathText = document.getElementById("death-text");
+const apiDot = document.getElementById("api-dot");
+const apiStatusText = document.getElementById("api-status-text");
+const gameDot = document.getElementById("game-dot");
+const gameStatusText = document.getElementById("game-status-text");
+const sidebarToggle = document.getElementById("sidebar-toggle");
+const sidebar = document.getElementById("sidebar");
+const sidebarOverlay = document.getElementById("sidebar-overlay");
 
 let ws = null;
 let deathTimer = null;
 let reconnectTimer = null;
 let reconnectAttempts = 0;
 let shuttingDown = false;
+let hasMessages = false;
 const MAX_RECONNECT_ATTEMPTS = 8;
 
+marked.setOptions({ breaks: false, gfm: true });
+
+function renderMarkdown(text) {
+  const raw = marked.parse(String(text));
+  return DOMPurify.sanitize(raw, {
+    ALLOWED_TAGS: [
+      "h1", "h2", "h3", "h4", "h5", "h6",
+      "p", "br", "hr",
+      "ul", "ol", "li",
+      "strong", "em", "del", "code", "pre",
+      "blockquote",
+      "table", "thead", "tbody", "tr", "th", "td",
+      "a", "img",
+    ],
+    ALLOWED_ATTR: ["href", "src", "alt", "title", "target"],
+  });
+}
+
+function hideWelcome() {
+  const welcome = chatLog.querySelector(".chat-welcome");
+  if (welcome) welcome.remove();
+}
+
 function addMessage(role, text) {
-  const li = document.createElement("li");
-  li.className = role === "user" ? "user-message" : "pilot-message";
-  li.textContent = String(text);
-  chatLog.appendChild(li);
+  hideWelcome();
+  hasMessages = true;
+  const article = document.createElement("article");
+  article.className = `message ${role}`;
+
+  const roleLabel = document.createElement("div");
+  roleLabel.className = "message-role";
+  roleLabel.textContent = role === "user" ? "你" : "Pilot";
+
+  const body = document.createElement("div");
+  body.className = "message-body";
+
+  if (role === "user") {
+    body.textContent = String(text);
+  } else {
+    body.innerHTML = renderMarkdown(String(text));
+  }
+
+  article.append(roleLabel, body);
+  chatLog.appendChild(article);
   chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function addSystemMessage(text) {
+  const article = document.createElement("article");
+  article.className = "message system";
+  const body = document.createElement("div");
+  body.className = "message-body";
+  body.textContent = String(text);
+  article.appendChild(body);
+  chatLog.appendChild(article);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function showTyping() {
+  hideWelcome();
+  const indicator = document.createElement("div");
+  indicator.className = "message pilot typing-indicator";
+  indicator.id = "typing";
+  for (let i = 0; i < 3; i++) {
+    const dot = document.createElement("span");
+    indicator.appendChild(dot);
+  }
+  chatLog.appendChild(indicator);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById("typing");
+  if (el) el.remove();
 }
 
 async function sendMessage(message) {
   addMessage("user", message);
   pilotInput.disabled = true;
   sendBtn.disabled = true;
+  showTyping();
 
   try {
     const res = await fetch("/api/chat", {
@@ -35,17 +109,19 @@ async function sendMessage(message) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
     });
+    hideTyping();
     if (!res.ok) {
-      const err = await res.json();
+      const err = await res.json().catch(() => ({}));
       addMessage("pilot", "错误: " + (err.detail || "请求失败"));
       return;
     }
     const data = await res.json();
     addMessage("pilot", data.answer || "(无回复)");
     if (data.stop_reason) {
-      addMessage("pilot", "[系统提示: " + data.stop_reason + "]");
+      addSystemMessage("[系统提示: " + data.stop_reason + "]");
     }
   } catch (e) {
+    hideTyping();
     addMessage("pilot", "网络错误，请确认后端已启动。");
   } finally {
     pilotInput.disabled = false;
@@ -54,52 +130,66 @@ async function sendMessage(message) {
   }
 }
 
-function showDeathBubble(advice) {
-  deathBubble.replaceChildren();
-  const heading = document.createElement("strong");
-  heading.textContent = "死亡事件";
-  const message = document.createElement("span");
-  message.textContent = String(advice.advice);
-  deathBubble.append(heading, document.createElement("br"), message);
-  deathBubble.hidden = false;
+function clearChat() {
+  chatLog.replaceChildren();
+  const welcome = document.createElement("div");
+  welcome.className = "chat-welcome";
+  welcome.innerHTML =
+    '<div class="welcome-icon">&#9752;</div>' +
+    '<h2>Minecraft Pilot 已就位</h2>' +
+    '<p>输入 <code>/pilot help</code> 查看命令，或直接提问。</p>';
+  chatLog.appendChild(welcome);
+  hasMessages = false;
+}
+
+function showDeathToast(advice) {
+  deathText.textContent = String(advice.advice);
+  deathToast.hidden = false;
+  deathToast.style.opacity = "1";
   if (deathTimer) clearTimeout(deathTimer);
   deathTimer = setTimeout(() => {
-    deathBubble.style.opacity = "0";
-    setTimeout(() => { deathBubble.hidden = true; deathBubble.style.opacity = ""; }, 500);
+    deathToast.style.opacity = "0";
+    setTimeout(() => {
+      deathToast.hidden = true;
+      deathToast.style.opacity = "";
+    }, 500);
   }, 12000);
 }
 
 function connectWebSocket() {
-  if (shuttingDown || ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) {
+  if (
+    shuttingDown ||
+    ws?.readyState === WebSocket.OPEN ||
+    ws?.readyState === WebSocket.CONNECTING
+  ) {
     return;
   }
   const proto = location.protocol === "https:" ? "wss:" : "ws:";
   ws = new WebSocket(proto + "//" + location.host + "/ws");
   ws.onopen = () => {
     reconnectAttempts = 0;
-    updateApiStatus("ready", "已连接");
+    updateApiStatus("ready");
   };
   ws.onclose = () => {
     ws = null;
-    updateApiStatus("degraded", "断开");
+    updateApiStatus("degraded");
     scheduleReconnect();
   };
-  ws.onerror = () => updateApiStatus("degraded", "连接错误");
+  ws.onerror = () => updateApiStatus("degraded");
   ws.onmessage = (e) => {
     try {
       const data = JSON.parse(e.data);
-      if (isDeathAdvice(data)) showDeathBubble(data);
+      if (isDeathAdvice(data)) showDeathToast(data);
       else if (isStateEvent(data)) updateGameStatus(data);
-      else if (data?.type !== "pong") updateApiStatus("degraded", "消息格式错误");
     } catch (_error) {
-      updateApiStatus("degraded", "消息格式错误");
+      /* ignore */
     }
   };
 }
 
 function scheduleReconnect() {
   if (shuttingDown || reconnectTimer || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) return;
-  const delay = Math.min(1000 * (2 ** reconnectAttempts), 30000);
+  const delay = Math.min(1000 * 2 ** reconnectAttempts, 30000);
   reconnectAttempts += 1;
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
@@ -115,18 +205,19 @@ function isStateEvent(data) {
   return data?.type === "state" && typeof data.state === "string";
 }
 
-function updateApiStatus(state, label) {
-  apiStatus.dataset.state = state;
-  apiStatus.textContent = label;
+function updateApiStatus(state) {
+  apiDot.dataset.state = state;
+  const labels = { ready: "就绪", degraded: "降级", connecting: "连接中", disconnected: "离线" };
+  apiStatusText.textContent = labels[state] || state;
 }
 
 function updateGameStatus(data) {
   if (data.state === "connected") {
-    gameStatus.dataset.state = "ready";
-    gameStatus.textContent = (data.player_name || "玩家") + " · " + (data.version_id || "");
+    gameDot.dataset.state = "ready";
+    gameStatusText.textContent = (data.player_name || "玩家") + " · " + (data.version_id || "");
   } else {
-    gameStatus.dataset.state = "degraded";
-    gameStatus.textContent = "未连接游戏";
+    gameDot.dataset.state = "disconnected";
+    gameStatusText.textContent = "未连接游戏";
   }
 }
 
@@ -135,21 +226,67 @@ chatForm.addEventListener("submit", (e) => {
   const msg = pilotInput.value.trim();
   if (!msg) return;
   pilotInput.value = "";
+  pilotInput.style.height = "auto";
   sendMessage(msg);
 });
 
-recipeCloseBtn?.addEventListener("click", () => {
-  recipeSection.hidden = true;
+pilotInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    chatForm.dispatchEvent(new Event("submit"));
+  }
+});
+
+pilotInput.addEventListener("input", () => {
+  pilotInput.style.height = "auto";
+  pilotInput.style.height = Math.min(pilotInput.scrollHeight, 160) + "px";
+});
+
+newChatBtn.addEventListener("click", async () => {
+  try {
+    await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "/pilot clear" }),
+    });
+    clearChat();
+    pilotInput.focus();
+  } catch (_error) {
+    clearChat();
+    pilotInput.focus();
+  }
+});
+
+document.querySelectorAll(".cmd-chip").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const cmd = btn.dataset.cmd;
+    if (cmd) {
+      pilotInput.value = cmd;
+      chatForm.dispatchEvent(new Event("submit"));
+    }
+  });
+});
+
+sidebarToggle.addEventListener("click", () => {
+  sidebar.classList.toggle("open");
+  const isOpen = sidebar.classList.contains("open");
+  sidebarOverlay.hidden = !isOpen;
+  sidebarToggle.setAttribute("aria-expanded", String(isOpen));
+});
+
+sidebarOverlay.addEventListener("click", () => {
+  sidebar.classList.remove("open");
+  sidebarOverlay.hidden = true;
+  sidebarToggle.setAttribute("aria-expanded", "false");
 });
 
 async function checkHealth() {
   try {
     const res = await fetch("/health/ready", { signal: AbortSignal.timeout(3000) });
     const data = await res.json();
-    updateApiStatus(data.status === "ready" ? "ready" : "degraded",
-      data.status === "ready" ? "就绪" : "降级");
-  } catch (_) {
-    updateApiStatus("degraded", "后端离线");
+    updateApiStatus(data.status === "ready" ? "ready" : "degraded");
+  } catch (_error) {
+    updateApiStatus("degraded");
   }
 }
 

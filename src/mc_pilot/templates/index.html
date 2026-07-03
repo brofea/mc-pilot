@@ -1,40 +1,83 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="hero" aria-labelledby="pilot-title">
-  <p class="eyebrow">Java Edition 26.2</p>
-  <h1 id="pilot-title">Minecraft Pilot</h1>
-  <p>你的本地 Minecraft 游戏助手。输入 <code>/pilot</code> 命令与 Agent 交互。</p>
-</section>
+<div class="app-shell">
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="切换侧边栏">
+    <span class="toggle-icon"></span>
+  </button>
 
-<div class="main-layout">
-  <section class="panel chat-panel" aria-labelledby="chat-title">
-    <div class="panel-heading">
-      <h2 id="chat-title">Pilot 对话</h2>
-      <span class="status-pill" id="game-status" data-state="disconnected">未连接游戏</span>
-      <span class="status-pill" id="api-status" data-state="connecting">检查中</span>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1 class="sidebar-logo">Minecraft Pilot</h1>
+      <p class="sidebar-version">Java Edition 26.2</p>
     </div>
-    <div id="death-bubble" class="death-bubble" hidden aria-live="assertive"></div>
-    <ol id="chat-log" class="chat-log" aria-live="polite">
-      <li class="pilot-message">Pilot 已就位。输入消息或 <code>/pilot help</code> 查看帮助。</li>
-    </ol>
-    <form id="chat-form" class="chat-form" autocomplete="off">
-      <label for="pilot-input">消息</label>
-      <div class="input-row">
-        <input id="pilot-input" name="message" placeholder="输入 /pilot 命令或问题…" autofocus>
-        <button type="submit" id="send-btn">发送</button>
+
+    <button class="new-chat-btn" id="new-chat-btn">+ 新对话</button>
+
+    <div class="sidebar-section">
+      <h2 class="sidebar-section-title">快捷命令</h2>
+      <button class="cmd-chip" data-cmd="/pilot help">帮助</button>
+      <button class="cmd-chip" data-cmd="/pilot status">运行状态</button>
+      <button class="cmd-chip" data-cmd="/pilot clear">清除记忆</button>
+    </div>
+
+    <div class="sidebar-section">
+      <h2 class="sidebar-section-title">系统状态</h2>
+      <div class="status-row">
+        <span class="status-dot" id="api-dot" data-state="connecting"></span>
+        <span id="api-status-text">检查中</span>
       </div>
-    </form>
-  </section>
-
-  <section class="panel recipe-panel" aria-labelledby="recipe-title" id="recipe-section" hidden>
-    <div class="panel-heading">
-      <h2 id="recipe-title">配方树</h2>
-      <button id="recipe-close-btn" class="small-btn" aria-label="关闭配方面板">关闭</button>
+      <div class="status-row">
+        <span class="status-dot" id="game-dot" data-state="disconnected"></span>
+        <span id="game-status-text">未连接游戏</span>
+      </div>
     </div>
-    <div id="recipe-content" class="recipe-content"></div>
-  </section>
+
+    <div class="sidebar-footer">
+      <a href="/admin" class="sidebar-link">开发者后台</a>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" hidden></div>
+
+  <main class="chat-main">
+    <div class="chat-messages" id="chat-log" aria-live="polite">
+      <div class="chat-welcome">
+        <div class="welcome-icon">&#9752;</div>
+        <h2>Minecraft Pilot 已就位</h2>
+        <p>输入 <code>/pilot help</code> 查看命令，或直接提问。</p>
+      </div>
+    </div>
+
+    <div class="chat-input-bar">
+      <form id="chat-form" class="chat-form" autocomplete="off">
+        <div class="input-wrapper">
+          <textarea
+            id="pilot-input"
+            name="message"
+            placeholder="输入 /pilot 命令或问题…"
+            rows="1"
+            autofocus
+          ></textarea>
+          <button type="submit" id="send-btn" aria-label="发送消息">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </form>
+      <p class="disclaimer">Minecraft Pilot 使用 DeepSeek API。AI 回答可能不准确，请核实关键信息。</p>
+    </div>
+  </main>
+</div>
+
+<div id="death-toast" class="death-toast" hidden aria-live="assertive">
+  <strong>死亡事件</strong>
+  <span id="death-text"></span>
 </div>
 {% endblock %}
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <script type="module" src="{{ url_for('static', path='/js/chat.js') }}"></script>
 {% endblock %}

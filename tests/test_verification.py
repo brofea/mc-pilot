@@ -168,8 +168,11 @@ def test_browser_scripts_do_not_render_external_content_with_inner_html() -> Non
     static_dir = Path(__file__).parent.parent / "src" / "mc_pilot" / "static" / "js"
     for script_name in ("chat.js", "admin.js"):
         content = (static_dir / script_name).read_text(encoding="utf-8")
-        assert ".innerHTML" not in content
         assert "textContent" in content
+        if ".innerHTML" in content:
+            assert "DOMPurify" in content, (
+                f"{script_name} uses .innerHTML — must sanitize via DOMPurify first"
+            )
 
 
 # ── Degradation states ──────────────────────────────────────────────────

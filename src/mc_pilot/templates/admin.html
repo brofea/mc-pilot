@@ -1,55 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="hero" aria-labelledby="admin-title">
-  <p class="eyebrow">Loopback-only</p>
-  <h1 id="admin-title">开发者后台</h1>
-</section>
+<header class="admin-header">
+  <a class="admin-back" href="/">&larr; 返回助手</a>
+  <span class="eyebrow">Loopback-only</span>
+</header>
 
-<div class="dashboard-grid" id="admin-dash">
-  <article class="panel">
-    <h2>系统</h2>
-    <dl class="kv-list" id="sys-data"><dt>加载中</dt><dd>…</dd></dl>
-  </article>
+<main class="admin-main">
+  <h1 class="admin-title">开发者后台</h1>
 
-  <article class="panel">
-    <h2>游戏连接</h2>
-    <dl class="kv-list" id="game-data"><dt>加载中</dt><dd>…</dd></dl>
-  </article>
+  <div class="dashboard-grid" id="admin-dash">
+    <article class="panel">
+      <h2>系统</h2>
+      <dl class="kv-list" id="sys-data"><dt>加载中</dt><dd>…</dd></dl>
+    </article>
 
-  <article class="panel">
-    <h2>配方</h2>
-    <dl class="kv-list" id="recipe-data"><dt>加载中</dt><dd>…</dd></dl>
-  </article>
+    <article class="panel">
+      <h2>游戏连接</h2>
+      <dl class="kv-list" id="game-data"><dt>加载中</dt><dd>…</dd></dl>
+    </article>
 
-  <article class="panel">
-    <h2>RAG / Qdrant</h2>
-    <dl class="kv-list" id="rag-data"><dt>加载中</dt><dd>…</dd></dl>
-  </article>
+    <article class="panel">
+      <h2>配方</h2>
+      <dl class="kv-list" id="recipe-data"><dt>加载中</dt><dd>…</dd></dl>
+    </article>
 
-  <article class="panel">
-    <h2>LLM / Agent</h2>
-    <dl class="kv-list" id="llm-data"><dt>加载中</dt><dd>…</dd></dl>
-  </article>
+    <article class="panel">
+      <h2>RAG / Qdrant</h2>
+      <dl class="kv-list" id="rag-data"><dt>加载中</dt><dd>…</dd></dl>
+    </article>
 
-  <article class="panel">
-    <h2>配置</h2>
-    <dl class="kv-list" id="config-data">
-      {% for key, value in settings.items() %}
-      <div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>
-      {% endfor %}
-    </dl>
-  </article>
+    <article class="panel">
+      <h2>LLM / Agent</h2>
+      <dl class="kv-list" id="llm-data"><dt>加载中</dt><dd>…</dd></dl>
+    </article>
 
-  <article class="panel">
-    <h2>诊断操作</h2>
-    <div class="action-group">
-      <button data-action="health-check" class="small-btn">健康检查</button>
-      <button data-action="reconnect-log" class="small-btn">重连日志</button>
-      <button data-action="rebuild-wiki" class="small-btn secondary">重建 Wiki 索引</button>
-    </div>
-    <pre id="diag-output" class="diag-output" aria-live="polite"></pre>
-  </article>
-</div>
+    <article class="panel">
+      <h2>配置</h2>
+      <dl class="kv-list" id="config-data">
+        {% for key, value in settings.items() %}
+        <div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>
+        {% endfor %}
+      </dl>
+    </article>
+
+    <article class="panel">
+      <h2>诊断操作</h2>
+      <div class="action-group">
+        <button data-action="health-check" class="small-btn">健康检查</button>
+        <button data-action="reconnect-log" class="small-btn">重连日志</button>
+        <button data-action="rebuild-wiki" class="small-btn secondary">重建 Wiki 索引</button>
+      </div>
+      <pre id="diag-output" class="diag-output" aria-live="polite"></pre>
+    </article>
+  </div>
+</main>
 {% endblock %}
 {% block scripts %}
 <script type="module" src="{{ url_for('static', path='/js/admin.js') }}"></script>
