@@ -13,7 +13,7 @@
 | Fabric 26.2 Mod | 已完成源码与可复现构建，属于第二阶段加分项 |
 | 支持版本 | 仅 Minecraft Java Edition 26.2 正式版 |
 
-当前质量门：Ruff 通过、Mypy strict 通过、`116 passed`、Docker 健康检查通过、Fabric Wrapper 构建通过。
+当前质量门：Ruff 通过、Mypy strict 通过、`121 passed`、Docker Compose 配置校验通过、Fabric Wrapper 构建通过。
 
 ## 核心能力
 
@@ -102,6 +102,25 @@ docker compose exec app python scripts/build_wiki.py
 
 # DeepSeek 连通性测试
 docker compose exec app python scripts/test_connectivity.py
+```
+
+配方构建通常较快。Wiki 构建会抓取九类页面并在 CPU 上生成数千条向量，首次运行可能需要数十分钟；看到连续的 Qdrant `points ... 200 OK` 属于正常进度，请等待终端出现 `Wiki index built` 并返回命令提示符。不要把终端工具超时或窗口断开误判成构建成功，可在另一终端用后台接口确认：
+
+```bash
+curl http://127.0.0.1:8000/admin/api/recipes
+curl http://127.0.0.1:8000/admin/api/rag
+```
+
+构建完成后，两个接口应分别显示已有配方数据和 `"index_exists":true`。还可以发起不经过前端的真实查询：
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"/pilot recipe minecraft:crafting_table"}'
+
+curl -X POST http://127.0.0.1:8000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"/pilot wiki 石头"}'
 ```
 
 `app-data` 和 `qdrant-data` 是命名卷；SQLite、Wiki API 缓存和 Hugging Face 模型缓存会在容器重建后保留。Minecraft 目录仅以只读方式挂载。

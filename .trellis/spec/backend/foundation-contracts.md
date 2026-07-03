@@ -44,6 +44,7 @@ Docker publishes app/Qdrant only on `127.0.0.1`, persists named volumes, and nev
 | App domain failure | standard `{"error": ...}` envelope with request ID |
 | Container data build requested | `scripts/build_recipes.py` and `scripts/build_wiki.py` are present in the app image |
 | Embedding model downloaded | cache is written below `/app/data/models`, not an ephemeral image layer |
+| Delivery workflow claimed working | run the documented container commands to completion and issue real recipe, Wiki, and configured-LLM HTTP queries |
 
 ## 5. Good / Base / Bad Cases
 
@@ -59,6 +60,7 @@ Docker publishes app/Qdrant only on `127.0.0.1`, persists named volumes, and nev
 - Assert `safe_summary()` never contains a configured secret.
 - Assert the Dockerfile copies `scripts/` and Compose maps `HF_HOME` below the persistent application-data volume.
 - Validate Compose configuration and run the container readiness endpoint before closing an infrastructure milestone.
+- Static image inspection and health checks are not delivery acceptance. Capture each data-build exit code, verify its persisted artifact (`recipes` rows or `mc_wiki_live` metadata), and exercise `/api/chat` through the same running image. Long-running exec-channel timeout is not process completion; inspect the container process or an explicit exit-status artifact.
 
 ## 7. Wrong vs Correct
 

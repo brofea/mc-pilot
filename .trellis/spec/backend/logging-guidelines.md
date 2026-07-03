@@ -14,3 +14,5 @@ Use levels consistently:
 Never log API keys, authorization headers, complete prompts, complete Wiki bodies, full chat history, full filesystem paths, or raw `latest.log` lines. Log hashes, basenames, redacted snippets, counts, tool names, status, tokens, and error codes instead.
 
 Agent traces record state transitions and summarized tool arguments/results. Admin diagnostics consume the same structured events; do not create a second ad-hoc tracing format.
+
+Fields passed through `logging(..., extra={...})` must not use standard `LogRecord` attribute names such as `name`, `msg`, `args`, `levelname`, `pathname`, `filename`, `module`, `lineno`, `thread`, or `process`. Use domain-qualified names such as `collection_name`, `source_path`, or `model_name`. A collision raises `KeyError` at runtime before the log can be emitted; every background-job logging change needs a test that executes the actual log statement.
