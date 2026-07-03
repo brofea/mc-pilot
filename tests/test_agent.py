@@ -185,3 +185,23 @@ def test_tool_message_converts_to_openai_format() -> None:
     assert len(schemas) == 1
     assert schemas[0]["type"] == "function"
     assert schemas[0]["function"]["name"] == "test_tool"
+
+
+def test_deepseek_usage_discards_nested_provider_details() -> None:
+    from mc_pilot.agent.client import _normalize_usage
+
+    usage = _normalize_usage(
+        {
+            "prompt_tokens": 640,
+            "completion_tokens": 19,
+            "total_tokens": 659,
+            "prompt_tokens_details": {"cached_tokens": 512},
+            "completion_tokens_details": {"reasoning_tokens": 19},
+        }
+    )
+
+    assert usage == {
+        "prompt_tokens": 640,
+        "completion_tokens": 19,
+        "total_tokens": 659,
+    }

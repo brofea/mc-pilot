@@ -83,6 +83,26 @@ def test_parse_shapeless_recipe() -> None:
     assert len(recipe.ingredients) == 2
 
 
+def test_parse_shapeless_recipe_with_26_2_alternative_list() -> None:
+    recipe = parse_recipe(
+        {
+            "type": "minecraft:crafting_shapeless",
+            "ingredients": [
+                ["minecraft:white_wool", "minecraft:black_wool"],
+                "minecraft:red_dye",
+            ],
+            "result": {"id": "minecraft:red_wool"},
+            "_file": "data/minecraft/recipe/dye_red_wool.json",
+        }
+    )
+
+    assert recipe is not None
+    assert [ingredient.item_id for ingredient in recipe.ingredients] == [
+        "minecraft:white_wool",
+        "minecraft:red_dye",
+    ]
+
+
 def test_parse_tag_ingredient() -> None:
     recipe = _make_recipe_from_fixture("shaped_crafting_table")
     assert recipe is not None

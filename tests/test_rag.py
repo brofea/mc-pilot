@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
+from unittest.mock import Mock
+from uuid import UUID
+
+import pytest
 
 from mc_pilot.rag.chunker import chunk_by_sections, clean_wiki_text
+from mc_pilot.rag.indexer import METADATA_POINT_ID, WikiIndexer
 from mc_pilot.rag.models import (
     AnswerResponse,
     IndexMetadata,
@@ -159,3 +165,72 @@ def test_index_metadata_model() -> None:
     )
     assert metadata.embedding_dimension == 512
     assert metadata.page_count == 100
+
+
+def test_ensure_staging_uses_non_reserved_log_field(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    client = Mock()
+    embedder = Mock()
+    embedder.dimension = 512
+    indexer = WikiIndexer(client=client, embedder=embedder)
+
+    with caplog.at_level(logging.INFO):
+        indexer.ensure_staging()
+
+    record = next(
+        record
+        for record in caplog.records
+        if record.message == "Staging collection created"
+    )
+    assert record.__dict__["collection_name"] == "mc_wiki_staging"
+
+
+def test_index_chunks_maps_domain_id_to_qdrant_uuid() -> None:
+    client = Mock()
+    embedder = Mock()
+    embedder.dimension = 512
+    embedder.encode.return_value = [[0.0] * 512]
+    indexer = WikiIndexer(client=client, embedder=embedder)
+    chunk = WikiChunk(
+        chunk_id="478_0",
+        page_id=478,
+        revision_id=2,
+        title="石头",
+        category="Category:方块",
+        url="https://zh.minecraft.wiki/石头",
+        text="石头是方块。",
+        chunk_index=0,
+        total_chunks=1,
+    )
+
+    assert indexer.index_chunks([chunk]) == 1
+    points = client.upsert.call_args.kwargs["points"]
+    assert str(UUID(str(points[0].id))) == points[0].id
+    assert points[0].payload["chunk_id"] == "478_0"
+    assert str(UUID(METADATA_POINT_ID)) == METADATA_POINT_ID
+
+
+def test_swap_to_live_stops_when_last_scroll_page_has_no_offset() -> None:
+    client = Mock()
+    embedder = Mock()
+    embedder.dimension = 512
+    record = Mock()
+    record.id = "f7e5851f-2925-5c86-a6eb-dfc28ee11e02"
+    record.vector = [0.0] * 512
+    record.payload = {"chunk_id": "478_0"}
+    client.scroll.return_value = ([record], None)
+    indexer = WikiIndexer(client=client, embedder=embedder)
+    metadata = IndexMetadata(
+        embedding_model_id="BAAI/bge-small-zh-v1.5",
+        embedding_dimension=512,
+        chunker_version="1.0.0",
+        built_at=datetime.now(),
+        page_count=1,
+        chunk_count=1,
+    )
+
+    indexer.swap_to_live(metadata)
+
+    client.scroll.assert_called_once()
+    assert client.upsert.call_count == 2
