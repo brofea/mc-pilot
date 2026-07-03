@@ -28,6 +28,17 @@ class ChatResponse:
     model: str
 
 
+def _normalize_usage(raw_usage: object) -> dict[str, int]:
+    """Keep scalar token counters and discard provider-specific nested details."""
+    if not isinstance(raw_usage, dict):
+        return {}
+    return {
+        str(key): value
+        for key, value in raw_usage.items()
+        if isinstance(value, int) and not isinstance(value, bool)
+    }
+
+
 class DeepSeekClient:
     """Thin wrapper over the DeepSeek chat completions endpoint."""
 
@@ -100,7 +111,7 @@ class DeepSeekClient:
         ]
         return ChatResponse(
             choices=choices,
-            usage=data.get("usage", {}),
+            usage=_normalize_usage(data.get("usage")),
             model=data.get("model", self._model),
         )
 

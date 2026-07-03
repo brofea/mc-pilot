@@ -33,15 +33,11 @@ class ConversationMemory:
         self._trim()
 
     def add_tool_result(self, result: ToolResult) -> None:
-        summary = (
-            result.content[:200] + "..."
-            if len(result.content) > 200
-            else result.content
-        )
+        content = result.content if result.success else f"错误: {result.error or '未知错误'}"
         self._turns.append(
             AgentTurn(
                 role="tool",
-                content=f"[{result.name}] {summary}",
+                content=content,
                 tool_call_id=result.tool_call_id,
             )
         )
@@ -64,6 +60,8 @@ class ConversationMemory:
         return self._daily_tokens >= self._daily_limit
 
     def as_messages(self) -> list[dict[str, object]]:
+        import json
+
         messages: list[dict[str, object]] = [
             {
                 "role": "system",
@@ -77,6 +75,18 @@ class ConversationMemory:
         ]
         for turn in self._turns:
             msg: dict[str, object] = {"role": turn.role, "content": turn.content}
+            if turn.role == "assistant" and turn.tool_calls:
+                msg["tool_calls"] = [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.name,
+                            "arguments": json.dumps(tc.arguments, ensure_ascii=False),
+                        },
+                    }
+                    for tc in turn.tool_calls
+                ]
             if turn.role == "tool" and turn.tool_call_id:
                 msg["tool_call_id"] = turn.tool_call_id
             messages.append(msg)

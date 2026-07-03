@@ -97,7 +97,7 @@ class WikiRetriever:
         for pt in title:
             if pt.payload is None:
                 continue
-            chunk_id = str(pt.id)
+            chunk_id = str(pt.payload.get("chunk_id", pt.id))
             if chunk_id in seen:
                 continue
             seen.add(chunk_id)
@@ -107,7 +107,7 @@ class WikiRetriever:
         for pt in dense:
             if pt.payload is None:
                 continue
-            chunk_id = str(pt.id)
+            chunk_id = str(pt.payload.get("chunk_id", pt.id))
             if chunk_id in seen:
                 continue
             seen.add(chunk_id)

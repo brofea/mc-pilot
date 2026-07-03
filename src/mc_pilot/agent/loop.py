@@ -172,16 +172,6 @@ class AgentLoop:
         for result in results:
             self._memory.add_tool_result(result)
 
-        # Build tool result messages for the model
-        tool_messages: list[dict[str, Any]] = []
-        for result in results:
-            content = result.content if result.success else f"错误: {result.error}"
-            tool_messages.append({
-                "role": "tool",
-                "tool_call_id": result.tool_call_id,
-                "content": content,
-            })
-
         # Cap at max tool turns
         if self._step >= MAX_TOOL_TURNS:
             self._stop_reason = f"达到最大工具轮数 ({MAX_TOOL_TURNS})"

@@ -205,7 +205,7 @@ def _parse_shaped_ingredients(
 def _parse_shapeless_ingredients(
     raw: dict[str, Any], ingredients: list[Ingredient]
 ) -> None:
-    entries: list[dict[str, Any]] = raw.get("ingredients", [])
+    entries: list[object] = raw.get("ingredients", [])
     for idx, entry in enumerate(entries):
         _append_ingredient_from_entry(entry, ingredients, None, idx)
 
@@ -227,13 +227,21 @@ def _parse_cutting_ingredients(
 
 
 def _append_ingredient_from_entry(
-    entry: dict[str, Any] | str,
+    entry: object,
     ingredients: list[Ingredient],
     slot_key: str | None,
     position: int,
 ) -> None:
+    # Minecraft 26.2 represents some ingredient alternatives as a list. The
+    # current domain model stores one representative per slot, matching the
+    # pre-existing shaped/cooking behavior until alternatives become a
+    # first-class recipe-tree concept.
+    if isinstance(entry, list):
+        entry = entry[0] if entry else {}
     if isinstance(entry, str):
         entry = {"item": entry}
+    if not isinstance(entry, dict):
+        return
 
     item_id = entry.get("item") or entry.get("id")
     tag = entry.get("tag")

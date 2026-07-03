@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import TypeGuard
+from uuid import NAMESPACE_URL, uuid5
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
@@ -21,6 +22,12 @@ logger = logging.getLogger(__name__)
 COLLECTION_BASE = "mc_wiki"
 VECTOR_SIZE = 512
 BATCH_SIZE = 100
+METADATA_POINT_ID = str(uuid5(NAMESPACE_URL, "mc-pilot:wiki:index-metadata"))
+
+
+def _qdrant_point_id(chunk_id: str) -> str:
+    """Map a domain chunk ID to a deterministic Qdrant-compatible UUID."""
+    return str(uuid5(NAMESPACE_URL, f"mc-pilot:wiki:chunk:{chunk_id}"))
 
 
 def _is_dense_vector(value: object) -> TypeGuard[list[int | float]]:
@@ -72,7 +79,10 @@ class WikiIndexer:
             field_name="page_id",
             field_schema=PayloadSchemaType.INTEGER,
         )
-        logger.info("Staging collection created", extra={"name": staging})
+        logger.info(
+            "Staging collection created",
+            extra={"collection_name": staging},
+        )
 
     def index_chunks(self, chunks: list[WikiChunk]) -> int:
         """Embed and upsert chunks into the staging collection in batches."""
@@ -88,9 +98,10 @@ class WikiIndexer:
             for chunk, vector in zip(batch, vectors, strict=True):
                 points.append(
                     PointStruct(
-                        id=chunk.chunk_id,
+                        id=_qdrant_point_id(chunk.chunk_id),
                         vector=vector,
                         payload={
+                            "chunk_id": chunk.chunk_id,
                             "page_id": chunk.page_id,
                             "revision_id": chunk.revision_id,
                             "title": chunk.title,
@@ -140,17 +151,17 @@ class WikiIndexer:
             field_schema=PayloadSchemaType.INTEGER,
         )
 
-        points: list[PointStruct] = []
         offset: str | int | None = None
         while True:
-            records, offset = self._client.scroll(
+            records, next_offset = self._client.scroll(
                 collection_name=staging,
                 with_vectors=True,
                 offset=offset,
-                limit=10_000,
+                limit=500,
             )
             if not records:
                 break
+            points: list[PointStruct] = []
             for rec in records:
                 raw_vector = rec.vector
                 if _is_dense_vector(raw_vector):
@@ -164,20 +175,20 @@ class WikiIndexer:
                         payload=rec.payload,
                     )
                 )
-
-        batch_size = 500
-        for i in range(0, len(points), batch_size):
             self._client.upsert(
                 collection_name=live,
-                points=points[i : i + batch_size],
+                points=points,
             )
+            if next_offset is None:
+                break
+            offset = next_offset
 
         metadata_payload = metadata.model_dump(mode="json")
         self._client.upsert(
             collection_name=live,
             points=[
                 PointStruct(
-                    id="__index_metadata__",
+                    id=METADATA_POINT_ID,
                     vector=[0.0] * self._embedder.dimension,
                     payload=metadata_payload,
                 )
@@ -200,7 +211,7 @@ class WikiIndexer:
         try:
             points = self._client.retrieve(
                 collection_name=live,
-                ids=["__index_metadata__"],
+                ids=[METADATA_POINT_ID],
                 with_payload=True,
             )
         except Exception:
