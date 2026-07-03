@@ -1,8 +1,6 @@
 # Minecraft Pilot Agent
 
-面向 Minecraft Java Edition 26.2 的本地游戏助手。项目把中文 Wiki RAG、官方配方数据和本地游戏日志接到一个轻量 Agent 后端，并提供网页界面与可选的 Fabric 客户端 Mod。
-
-> 这是非官方课程设计项目，与 Mojang、Microsoft 或 Minecraft Wiki 无隶属关系。
+面向 Minecraft Java Edition 26.2 的本地游戏助手。将中文 Wiki RAG、官方配方数据和本地游戏日志接到一个轻量 Agent 后端，并提供网页界面与可选的 Fabric 客户端 Mod。
 
 ## 项目状态
 
@@ -356,19 +354,9 @@ docker compose logs --tail=100 app
 
 ## 已知限制
 
-- 本次验收仅覆盖 Java Edition 26.2 正式版，不承诺其他 26.x 版本；
+- 仅覆盖 Java Edition 26.2 正式版，不承诺其他 26.x 版本；
 - 网页后台尚不能输入任意日志路径，也不能直接重建 Wiki；
 - 会话记忆保存在当前后端进程内，服务重启后清空；
 - Wiki 采用白名单分类，不等于抓取整个中文 Minecraft Wiki；
 - 未提供真实 DeepSeek Key 时，自动化测试不会证明线上模型账户与额度可用；
 - Fabric Mod 当前固定连接 `127.0.0.1:8000`。
-
-## 课程材料
-
-- [实验报告](docs/实验报告.md)
-- [实验报告提交及评分标准](docs/实验报告提交及评分标准.md)
-- [课程说明](docs/instruction.md)
-
-## License 与第三方内容
-
-仓库代码的许可证以项目实际发布文件为准。Minecraft、Mojang、Microsoft、中文 Minecraft Wiki、Fabric、DeepSeek、Qdrant 与所用模型分别受其自身条款约束；提交课程作业或公开部署前，请保留来源、许可和非官方声明。
