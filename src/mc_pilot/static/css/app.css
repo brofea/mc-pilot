@@ -127,6 +127,38 @@ body {
   color: var(--gray-200);
 }
 
+.status-detail {
+  padding: 0.2rem 0 0 1.1rem;
+  font-size: 0.75rem;
+  color: var(--gray-200);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.reconnect-btn {
+  display: block;
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--gray-700);
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.reconnect-btn:hover {
+  background: var(--gray-800);
+}
+
+.reconnect-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .status-dot {
   width: 8px;
   height: 8px;

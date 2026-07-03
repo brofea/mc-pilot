@@ -72,14 +72,8 @@ def extract_player_from_log(lines: list[str]) -> str | None:
         lowered = line.lower()
         if "logged in with entity id" in lowered:
             for segment in line.split():
-                stripped = segment.strip("[]")
-                if ":" in stripped and stripped.split(":")[1].isdigit():
-                    continue
-                if (
-                    stripped.isascii()
-                    and len(stripped) > 1
-                    and not stripped.startswith("[")
-                    and not stripped.startswith("(")
-                ):
-                    return stripped.split("[")[0].strip()
+                if "[local:" in segment or "[local:E:" in segment:
+                    player = segment.split("[")[0].strip()
+                    if player and player.lower() not in {"server", "null", "unknown"}:
+                        return player
     return None

@@ -9,6 +9,10 @@ const apiDot = document.getElementById("api-dot");
 const apiStatusText = document.getElementById("api-status-text");
 const gameDot = document.getElementById("game-dot");
 const gameStatusText = document.getElementById("game-status-text");
+const gameDetail = document.getElementById("game-detail");
+const gamePlayer = document.getElementById("game-player");
+const gameVersion = document.getElementById("game-version");
+const reconnectBtn = document.getElementById("reconnect-btn");
 const sidebarToggle = document.getElementById("sidebar-toggle");
 const sidebar = document.getElementById("sidebar");
 const sidebarOverlay = document.getElementById("sidebar-overlay");
@@ -214,10 +218,46 @@ function updateApiStatus(state) {
 function updateGameStatus(data) {
   if (data.state === "connected") {
     gameDot.dataset.state = "ready";
-    gameStatusText.textContent = (data.player_name || "玩家") + " · " + (data.version_id || "");
+    gameStatusText.textContent = "已连接游戏";
+    gamePlayer.textContent = data.player_name || "";
+    gameVersion.textContent = data.version_id || "";
+    gameDetail.hidden = false;
   } else {
     gameDot.dataset.state = "disconnected";
     gameStatusText.textContent = "未连接游戏";
+    gameDetail.hidden = true;
+  }
+}
+
+async function fetchGameState() {
+  try {
+    const res = await fetch("/api/game-state", { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const data = await res.json();
+      updateGameStatus(data);
+    }
+  } catch (_error) {
+    /* ignore */
+  }
+}
+
+async function reconnectGame() {
+  reconnectBtn.disabled = true;
+  reconnectBtn.textContent = "扫描中…";
+  try {
+    const res = await fetch("/api/game-state/reconnect", {
+      method: "POST",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      updateGameStatus(data);
+    }
+  } catch (_error) {
+    /* ignore */
+  } finally {
+    reconnectBtn.disabled = false;
+    reconnectBtn.textContent = "重连游戏日志";
   }
 }
 
@@ -291,7 +331,10 @@ async function checkHealth() {
 }
 
 checkHealth();
+fetchGameState();
 connectWebSocket();
+
+reconnectBtn.addEventListener("click", reconnectGame);
 
 window.addEventListener("pagehide", () => {
   shuttingDown = true;

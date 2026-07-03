@@ -70,4 +70,15 @@ def create_game_router(game_service: GameStateService) -> APIRouter:
             state.web_socket_clients = max(0, state.web_socket_clients - 1)
             game_service.remove_advice_callback(on_advice)
 
+    @router.post("/api/game-state/reconnect")
+    async def reconnect_game(request: Request) -> dict[str, object]:
+        state = await game_service.reconnect()
+        return {
+            "state": state.state,
+            "version_id": state.version_id,
+            "player_name": state.player_name,
+            "log_path": state.log_path,
+            "death_count": state.death_count,
+        }
+
     return router
