@@ -73,3 +73,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: README delivery rewrite
+
+**Date**: 2026-07-04
+**Task**: README delivery rewrite
+**Branch**: `main`
+
+### Summary
+
+Rewrote README as an accurate reproducible delivery guide, aligned Docker operator scripts and persistent model cache with the documented workflow, added verification contracts, and passed 116 tests plus live container readiness checks.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `aa1655f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
