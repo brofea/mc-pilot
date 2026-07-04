@@ -90,7 +90,7 @@ class GameLogListener:
         self._running = False
 
     def _scan_initial(self) -> None:
-        recent = self._tailer.read_tail(max_lines=200)
+        recent = self._tailer.read_tail(max_lines=500)
         version = extract_version_from_log(recent)
         player = extract_player_from_log(recent)
 
@@ -109,6 +109,16 @@ class GameLogListener:
                 "state": self._state.state,
             },
         )
+
+        if player:
+            for line in recent:
+                event = parse_death(line, player)
+                if event is not None:
+                    self._known_events.add(event.event_id)
+                    logger.debug(
+                        "Historical death seeded",
+                        extra={"category": event.category, "source": event.source},
+                    )
 
     def _process_lines(self, lines: list[str]) -> None:
         self._state.last_activity = datetime.now(UTC)
