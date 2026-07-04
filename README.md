@@ -1,19 +1,18 @@
-# Minecraft Pilot Agent
+<div align="center">
+    <img width="200" alt="icon" src="https://github.com/user-attachments/assets/880c6c14-bf9f-43e6-a8b1-08a37830af9e" />
+    <h1>Minecraft Pilot Agent</h1>
+    <p>为 MC 26.x 打造的 AI 游戏助手</p>
+    <p>
+        <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">
+            <img src="https://img.shields.io/badge/license-GPL--3.0-green" />
+        </a>
+        <a href="https://github.com/brofea">
+            <img src="https://img.shields.io/badge/brofea-brofea?label=GitHub&logo=github&color=purple" alt="GitHub Profile">
+        </a>
+    </p>
+</div>
 
 面向 Minecraft Java Edition 26.2 的本地游戏助手。将中文 Wiki RAG、官方配方数据和本地游戏日志接到一个轻量 Agent 后端，并提供网页界面与可选的 Fabric 客户端 Mod。
-
-## 项目状态
-
-| 项目 | 状态 |
-|---|---|
-| 网页 MVP | 已完成，可通过 Docker 或本地 Python 运行 |
-| 中文 Wiki RAG | 已实现，需要先构建 Qdrant 索引 |
-| 官方配方与 N 层配方树 | 已实现，需要先构建 SQLite 数据 |
-| 本地死亡日志建议 | 已实现，需要 Minecraft 日志和 DeepSeek API |
-| Fabric 26.2 Mod | 已完成源码与可复现构建，属于第二阶段加分项 |
-| 支持版本 | 仅 Minecraft Java Edition 26.2 正式版 |
-
-当前质量门：Ruff 通过、Mypy strict 通过、`121 passed`、Docker Compose 配置校验通过、Fabric Wrapper 构建通过。
 
 ## 核心能力
 
@@ -22,6 +21,10 @@
 3. **游戏日志分析**：只读监听本地 `latest.log`，识别本地玩家和简中/英文死亡消息，每次有效死亡最多调用一次 DeepSeek，并通过 WebSocket 推送一条短建议。
 4. **轻量 Agent**：支持自然语言、MCP 风格 Function Calling、6 轮短期记忆、工具白名单、调用轮次限制与 token 预算。
 5. **开发者后台**：展示系统、游戏、配方、RAG、LLM 和脱敏配置状态；仅允许本机访问。
+
+<div align="center">
+    <img width="700" alt="image" src="https://github.com/user-attachments/assets/71b70566-f12b-4b92-aab4-2810a197dd75" />
+</div>
 
 ## 架构
 
@@ -40,7 +43,7 @@ flowchart LR
     Game --> API
 ```
 
-## 快速开始：Docker（推荐交付方式）
+## 快速开始：Docker
 
 ### 1. 前置条件
 
@@ -133,9 +136,9 @@ docker compose down
 
 这不会删除数据卷。只有明确执行 `docker compose down -v` 才会删除本地项目数据。
 
-## 本地开发模式
+## 本地开发
 
-本项目只使用 `pip`、`.venv` 和 Docker，**不要使用 conda**。
+本项目只使用 `pip`、`.venv` 和 Docker，不使用 conda。
 
 ### 1. Python 环境
 
@@ -252,7 +255,7 @@ curl -X POST http://127.0.0.1:8000/api/recipes/tree \
   -d '{"item_id":"minecraft:diamond_sword","quantity":1,"max_depth":3}'
 ```
 
-## Fabric Mod（第二阶段加分项）
+## Fabric Mod
 
 要求：
 
