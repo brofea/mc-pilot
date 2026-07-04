@@ -24,6 +24,7 @@ from mc_pilot.recipes.models import (
 )
 from mc_pilot.recipes.store import (
     clear_version_data,
+    count_recipes,
     load_item_names,
     load_recipes,
     load_tags,
@@ -225,6 +226,22 @@ class RecipeService:
 
     def _get_engine(self) -> Engine:
         return self._engine
+
+    def get_stats(self) -> dict[str, object]:
+        """Return recipe database statistics."""
+        try:
+            with Session(self._engine) as session:
+                counts = count_recipes(session, self._version_id)
+            return {
+                "available": True,
+                "version_id": self._version_id,
+                "recipe_count": counts["recipes"],
+                "item_count": counts["items"],
+                "tag_count": counts["tags"],
+            }
+        except Exception as exc:
+            logger.warning("Failed to get recipe stats", extra={"error": str(exc)})
+            return {"available": False, "version_id": self._version_id, "error": str(exc)}
 
 
 def _normalize_tags(

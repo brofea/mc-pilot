@@ -92,12 +92,13 @@ class DeepSeekClient:
             data: dict[str, Any] = response.json()
 
         elapsed = (time.monotonic() - start) * 1000
-        logger.debug(
-            "DeepSeek chat completed",
+        logger.info(
+            "POST /v1/chat/completions 200 OK",
             extra={
                 "model": self._model,
                 "duration_ms": round(elapsed, 1),
-                "usage": data.get("usage", {}),
+                "finish_reason": data.get("choices", [{}])[0].get("finish_reason", "stop"),
+                "total_tokens": _normalize_usage(data.get("usage")).get("total_tokens", 0),
             },
         )
 

@@ -24,8 +24,15 @@ RUN python -m pip install --root-user-action=ignore --upgrade pip \
 COPY README.md ./
 COPY src ./src
 COPY scripts ./scripts
+COPY tests ./tests
 
-RUN python -m pip install --root-user-action=ignore --no-deps .
+RUN python -m pip install --root-user-action=ignore --no-deps . \
+    && python -m pip install --root-user-action=ignore \
+        httpx==0.28.1 \
+        mypy==1.17.1 \
+        pytest==8.4.1 \
+        pytest-cov==6.2.1 \
+        ruff==0.12.11
 
 RUN addgroup --system app \
     && adduser --system --ingroup app app \

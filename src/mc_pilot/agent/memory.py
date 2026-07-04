@@ -69,7 +69,8 @@ class ConversationMemory:
                     "你是 Minecraft Pilot，一个面向中文玩家的 Minecraft 游戏助手。"
                     "你可以搜索 Wiki 知识库和查询合成配方。"
                     "回答要简洁、准确，带有来源引用。"
-                    "不确定时明确说明，不编造信息。"
+                    "工具返回的信息已经很充分时，立即给出回答，不要反复搜索同一个话题。"
+                    "基于已有信息给出最佳答案即可，明确标注信息来源。"
                 ),
             }
         ]
@@ -94,6 +95,13 @@ class ConversationMemory:
 
     def clear(self) -> None:
         self._turns.clear()
+
+    def strip_tool_context(self) -> None:
+        """Remove assistant(tool_calls) and tool(tool_result) messages
+        left over from a previous incomplete agent loop.  These messages
+        form an invalid sequence when a fresh user turn is appended."""
+        while self._turns and self._turns[-1].role in ("assistant", "tool"):
+            self._turns.pop()
 
     def _trim(self) -> None:
         while len(self._turns) > MAX_TURNS * 2 + 1:

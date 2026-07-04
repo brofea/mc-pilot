@@ -157,7 +157,7 @@ class AgentService:
     async def _tool_executor(self, name: str, arguments: dict[str, object]) -> str:
         if name == "wiki_search":
             query = str(arguments.get("query", ""))
-            top_k = int(str(arguments.get("top_k", 5)))
+            top_k = int(str(arguments.get("top_k", 8)))
             return await self._execute_wiki_search(query, top_k)
         elif name == "recipe_query":
             item_id = str(arguments.get("item_id", ""))

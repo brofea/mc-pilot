@@ -72,19 +72,16 @@ def create_admin_router(
     @router.get("/recipes")
     async def recipe_diag(request: Request) -> dict[str, object]:
         _require_loopback(request)
-        return {
-            "available": recipe_service is not None,
-            "version_id": recipe_service.version_id if recipe_service else None,
-        }
+        if recipe_service and hasattr(recipe_service, "get_stats"):
+            return dict(recipe_service.get_stats())
+        return {"available": False, "version_id": None}
 
     @router.get("/rag")
     async def rag_diag(request: Request) -> dict[str, object]:
         _require_loopback(request)
-        has_wiki = wiki_service is not None
-        return {
-            "available": has_wiki,
-            "index_exists": False,
-        }
+        if wiki_service and hasattr(wiki_service, "index_stats"):
+            return dict(wiki_service.index_stats())
+        return {"available": False, "index_exists": False}
 
     @router.get("/llm")
     async def llm_diag(request: Request) -> dict[str, object]:

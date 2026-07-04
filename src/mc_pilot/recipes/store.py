@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from mc_pilot.recipes.models import (
@@ -166,3 +166,17 @@ def load_tags(session: Session, version_id: str) -> dict[str, list[str]]:
     for o in orms:
         result.setdefault(o.tag_name, []).append(o.item_id)
     return result
+
+
+def count_recipes(session: Session, version_id: str) -> dict[str, int]:
+    """Return counts for recipes, items, and tags in a version."""
+    recipe_count = session.execute(
+        select(func.count()).select_from(RecipeOrm).where(RecipeOrm.version_id == version_id)
+    ).scalar_one()
+    item_count = session.execute(
+        select(func.count()).select_from(ItemOrm).where(ItemOrm.version_id == version_id)
+    ).scalar_one()
+    tag_count = session.execute(
+        select(func.count()).select_from(ItemTagOrm).where(ItemTagOrm.version_id == version_id)
+    ).scalar_one()
+    return {"recipes": recipe_count, "items": item_count, "tags": tag_count}

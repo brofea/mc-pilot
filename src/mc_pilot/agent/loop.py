@@ -23,7 +23,7 @@ from mc_pilot.agent.tools import TOOL_WHITELIST
 
 logger = logging.getLogger(__name__)
 
-MAX_TOOL_TURNS = 4
+MAX_TOOL_TURNS = 6
 
 
 type ToolExecutor = Callable[[str, dict[str, Any]], Awaitable[str]]
@@ -40,6 +40,7 @@ class AgentLoop:
     _step: int
     _state: AgentState
     _stop_reason: str | None
+    _wiki_search_count: int
 
     def __init__(
         self,
@@ -56,8 +57,10 @@ class AgentLoop:
         self._step = 0
         self._state = AgentState.received
         self._stop_reason = None
+        self._wiki_search_count = 0
 
     async def run(self, user_message: str) -> AgentResponse:
+        self._memory.strip_tool_context()
         self._memory.add_user(user_message)
         self._add_trace(AgentState.received, "user_message_received")
         self._state = AgentState.received
@@ -65,11 +68,13 @@ class AgentLoop:
         if self._memory.is_over_budget:
             self._stop_reason = "每日 token 预算已用尽"
             self._add_trace(AgentState.stopped, "budget_exceeded")
+            logger.info("Agent stopped (budget exceeded)")
             return self._respond(
                 "每日 token 配额已用尽。明天会自动重置。",
                 AgentState.stopped,
             )
 
+        logger.info("Agent loop started")
         try:
             return await self._decide()
         except Exception as exc:
@@ -82,6 +87,8 @@ class AgentLoop:
         self._add_trace(AgentState.deciding, "model_inference_started")
 
         tool_schemas = DeepSeekClient.build_tool_schema(self._exported_tools)
+        if self._wiki_search_count >= 3:
+            tool_schemas = None
         chat_start = time.monotonic()
 
         response = await self._client.chat(
@@ -142,6 +149,7 @@ class AgentLoop:
         )
 
         if tool_call.name not in TOOL_WHITELIST:
+            logger.warning("Tool blocked by whitelist", extra={"tool": tool_call.name})
             return ToolResult(
                 tool_call_id=tool_call.id,
                 name=tool_call.name,
@@ -149,8 +157,24 @@ class AgentLoop:
                 error=f"未知工具: {tool_call.name}",
             )
 
+        logger.info(
+            "Tool executing",
+            extra={
+                "tool": tool_call.name,
+                "tool_args": json.dumps(tool_call.arguments, ensure_ascii=False)[:120],
+            },
+        )
         try:
             content = await self._tool_executor(tool_call.name, tool_call.arguments)
+            logger.info("Tool completed", extra={"tool": tool_call.name})
+            if tool_call.name == "wiki_search":
+                self._wiki_search_count += 1
+                if self._wiki_search_count >= 3:
+                    hint = (
+                        "[系统提示] 已进行多次 Wiki 搜索，信息充足，"
+                        "请立即基于已有结果给出回答。不要再搜索了。"
+                    )
+                    content += "\n\n" + hint
             return ToolResult(
                 tool_call_id=tool_call.id,
                 name=tool_call.name,
@@ -158,6 +182,7 @@ class AgentLoop:
                 content=content,
             )
         except Exception as exc:
+            logger.error("Tool failed", extra={"tool": tool_call.name, "error": str(exc)})
             return ToolResult(
                 tool_call_id=tool_call.id,
                 name=tool_call.name,
@@ -176,12 +201,14 @@ class AgentLoop:
         if self._step >= MAX_TOOL_TURNS:
             self._stop_reason = f"达到最大工具轮数 ({MAX_TOOL_TURNS})"
             self._add_trace(AgentState.stopped, "max_turns_reached")
+            logger.warning("Agent stopped (max turns)")
             return self._respond(
                 "已达到最大工具调用次数。基于已有信息给出回答。",
                 AgentState.stopped,
             )
 
-        self._add_trace(AgentState.observing, "tool_result_observed")
+            self._add_trace(AgentState.observing, "tool_result_observed")
+        logger.info("Agent observing tool results", extra={"turn": self._step})
         return await self._decide()
 
     def _parse_tool_calls(self, raw: list[dict[str, Any]]) -> list[ToolCall]:
@@ -203,6 +230,10 @@ class AgentLoop:
         return result
 
     def _respond(self, answer: str, state: AgentState) -> AgentResponse:
+        logger.info(
+            "Agent response ready",
+            extra={"state": state.value, "answer_len": len(answer), "turns": self._step},
+        )
         return AgentResponse(
             state=state,
             answer=answer,

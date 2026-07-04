@@ -110,7 +110,7 @@ class WikiService:
         self,
         query: str,
         *,
-        top_k: int = 5,
+        top_k: int = 8,
         retriever: WikiRetriever | None = None,
     ) -> AnswerResponse:
         r = retriever or self.get_retriever()
@@ -223,6 +223,22 @@ class WikiService:
             "快照",
         )
         return any(kw in title for kw in exclude_keywords)
+
+    def index_stats(self) -> dict[str, object]:
+        """Return Wiki RAG index statistics from Qdrant."""
+        try:
+            qdrant = QdrantClient(url=self._qdrant_url)
+            info = qdrant.get_collection("mc_wiki_live")
+            qdrant.close()
+            return {
+                "available": True,
+                "index_exists": True,
+                "chunk_count": info.points_count or 0,
+                "vectors_count": info.vectors_count or 0,
+            }
+        except Exception as exc:
+            logger.warning("Failed to get Wiki index stats", extra={"error": str(exc)})
+            return {"available": True, "index_exists": False, "error": str(exc)}
 
     def _chunk_pages(self, pages: list[WikiPage]) -> list[WikiChunk]:
         all_chunks: list[WikiChunk] = []

@@ -10,7 +10,6 @@ __pycache__
 .ruff_cache
 data
 models
-tests
 docs
 *.log
 *.egg-info

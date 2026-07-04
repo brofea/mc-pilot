@@ -1,0 +1,16 @@
+=== Recipes ===
+{
+    "available": true,
+    "version_id": "26.2",
+    "recipe_count": 1451,
+    "item_count": 3680,
+    "tag_count": 4939
+}
+
+=== RAG ===
+{
+    "available": true,
+    "index_exists": true,
+    "chunk_count": 14622,
+    "vectors_count": 0
+}

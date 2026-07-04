@@ -19,10 +19,10 @@ WIKI_SEARCH_TOOL = ToolMessage(
             },
             "top_k": {
                 "type": "integer",
-                "description": "返回的结果数量，默认 5，最大 10",
-                "default": 5,
+                "description": "返回的结果数量，默认 8，最大 15",
+                "default": 8,
                 "minimum": 1,
-                "maximum": 10,
+                "maximum": 15,
             },
         },
         "required": ["query"],
