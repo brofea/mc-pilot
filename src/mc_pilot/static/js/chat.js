@@ -129,7 +129,7 @@ function createThinkingBlock() {
   return block;
 }
 
-function addThinkingStep(icon, text, cls) {
+function addThinkingStep(icon, label, detail, cls) {
   if (!activeThinkingId) return;
   const block = document.getElementById(activeThinkingId);
   if (!block) return;
@@ -143,13 +143,25 @@ function addThinkingStep(icon, text, cls) {
   iconEl.className = "step-icon";
   iconEl.textContent = icon;
 
-  const textEl = document.createElement("span");
-  textEl.className = "step-text";
-  textEl.textContent = text;
+  const labelEl = document.createElement("span");
+  labelEl.className = "step-label";
+  labelEl.textContent = label;
 
-  step.append(iconEl, textEl);
+  step.append(iconEl, labelEl);
+
+  if (detail) {
+    const sepEl = document.createElement("span");
+    sepEl.className = "step-sep";
+    sepEl.textContent = "：";
+
+    const detailEl = document.createElement("span");
+    detailEl.className = "step-detail";
+    detailEl.textContent = detail;
+
+    step.append(sepEl, detailEl);
+  }
+
   steps.appendChild(step);
-
   chatLog.scrollTop = chatLog.scrollHeight;
   return step;
 }
@@ -310,10 +322,9 @@ function handleStreamEvent(event) {
         event.name === "wiki_search" ? "🔍" :
         event.name === "recipe_query" ? "📋" :
         event.name === "get_status" ? "📊" : "🔧";
-      const label = event.detail
-        ? event.label + "：" + event.detail
-        : event.label || event.name;
-      addThinkingStep(icon, label, "tool-running");
+      const label = event.label || event.name;
+      const detail = event.detail || "";
+      addThinkingStep(icon, label, detail, "tool-running");
       break;
     }
     case "tool_end": {
@@ -327,7 +338,7 @@ function handleStreamEvent(event) {
       break;
     }
     case "error":
-      addThinkingStep("❌", event.message || "未知错误", "error");
+      addThinkingStep("❌", event.message || "未知错误", "", "error");
       break;
     case "done":
     case "result":

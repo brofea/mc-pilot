@@ -196,10 +196,10 @@ docker compose up -d qdrant
 
 | 输入 | 行为 | 前置条件 | 消耗 LLM |
 |---|---|---|---|
-| `你好` 或打招呼 | Agent 返回功能介绍 | DeepSeek Key | 是 |
-| `钻石剑需要什么材料` | Agent 调用 recipe_query | DeepSeek Key | 是 |
-| `凋零骷髅在哪生成` | Agent 调用 wiki_search | DeepSeek Key | 是 |
-| `查看状态` | Agent 调用 get_status | DeepSeek Key | 是 |
+| `你好` 或打招呼 | Agent 返回功能介绍 | LLM API KEY | 是 |
+| `钻石剑需要什么材料` | Agent 调用 recipe_query | LLM API KEY | 是 |
+| `凋零骷髅在哪生成` | Agent 调用 wiki_search | LLM API KEY | 是 |
+| `查看状态` | Agent 调用 get_status | LLM API KEY | 是 |
 | `/pilot wiki 末地传送门` | 直接检索 Wiki（不走 LLM） | 已构建 Wiki 索引 | 否 |
 | `/pilot recipe minecraft:bow` | 直接查配方树（不走 LLM） | 已构建配方数据 | 否 |
 
