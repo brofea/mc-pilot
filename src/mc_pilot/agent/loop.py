@@ -161,15 +161,24 @@ class AgentLoop:
         )
 
         tool_label = {
-            "wiki_search": "搜索 Wiki 知识库",
-            "recipe_query": "查询合成配方",
-            "recipe_direct": "查询直接配方",
+            "wiki_search": "搜索 Wiki",
+            "recipe_query": "查询配方",
+            "recipe_direct": "查询配方",
+            "get_status": "获取状态",
         }.get(tool_call.name, tool_call.name)
+
+        detail = ""
+        if tool_call.name == "wiki_search":
+            detail = str(tool_call.arguments.get("query", ""))[:80]
+        elif tool_call.name in ("recipe_query", "recipe_direct"):
+            detail = str(tool_call.arguments.get("item_id", ""))
+        elif tool_call.name == "get_status":
+            detail = "运行状态"
 
         await self._emit("tool_start", {
             "name": tool_call.name,
             "label": tool_label,
-            "arguments": tool_call.arguments,
+            "detail": detail,
         })
 
         if tool_call.name not in TOOL_WHITELIST:

@@ -308,8 +308,12 @@ function handleStreamEvent(event) {
     case "tool_start": {
       const icon =
         event.name === "wiki_search" ? "🔍" :
-        event.name === "recipe_query" ? "📋" : "🔧";
-      addThinkingStep(icon, event.label || event.name, "tool-running");
+        event.name === "recipe_query" ? "📋" :
+        event.name === "get_status" ? "📊" : "🔧";
+      const label = event.detail
+        ? event.label + "：" + event.detail
+        : event.label || event.name;
+      addThinkingStep(icon, label, "tool-running");
       break;
     }
     case "tool_end": {

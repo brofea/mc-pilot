@@ -132,6 +132,7 @@ class ConversationMemory:
                     }
                     for tc in turn.tool_calls
                 ]
+                msg["content"] = ""
             if turn.role == "tool" and turn.tool_call_id:
                 msg["tool_call_id"] = turn.tool_call_id
             messages.append(msg)
