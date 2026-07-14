@@ -54,7 +54,7 @@ class DeepSeekClient:
         base_url: str,
         api_key: str,
         model: str = "deepseek-v4-flash",
-        timeout_seconds: float = 60.0,
+        timeout_seconds: float = 180.0,
         max_tokens: int = 1600,
     ) -> None:
         self._base_url = base_url.rstrip("/")
@@ -86,10 +86,38 @@ class DeepSeekClient:
             payload["tool_choice"] = tool_choice
 
         start = time.monotonic()
-        async with httpx.AsyncClient(timeout=self._timeout_seconds) as client:
-            response = await client.post(url, json=payload, headers=headers)
-            response.raise_for_status()
-            data: dict[str, Any] = response.json()
+        last_error: str | None = None
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient(timeout=self._timeout_seconds) as client:
+                    response = await client.post(url, json=payload, headers=headers)
+                    response.raise_for_status()
+                    data: dict[str, Any] = response.json()
+                    break
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code >= 500 or exc.response.status_code == 429:
+                    last_error = str(exc)
+                    delay = 2 ** attempt
+                    logger.warning(
+                        "DeepSeek API error (attempt %d/3), retrying in %ds",
+                        attempt + 1, delay,
+                    )
+                    time.sleep(delay)
+                    continue
+                raise
+            except httpx.TimeoutException:
+                if attempt < 2:
+                    last_error = "timeout"
+                    logger.warning(
+                        "DeepSeek API timeout (attempt %d/3), retrying …",
+                        attempt + 1,
+                    )
+                    continue
+                raise
+        else:
+            raise httpx.TimeoutException(
+                f"DeepSeek API failed after 3 attempts: {last_error}"
+            ) from None
 
         elapsed = (time.monotonic() - start) * 1000
         logger.info(

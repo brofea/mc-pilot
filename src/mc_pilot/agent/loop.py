@@ -232,23 +232,44 @@ class AgentLoop:
     async def _handle_observation(self, results: list[ToolResult]) -> AgentResponse:
         self._step += 1
 
-        # Add tool results to memory
         for result in results:
             self._memory.add_tool_result(result)
 
-        # Cap at max tool turns
         if self._step >= MAX_TOOL_TURNS:
             self._stop_reason = f"达到最大工具轮数 ({MAX_TOOL_TURNS})"
             self._add_trace(AgentState.stopped, "max_turns_reached")
             logger.warning("Agent stopped (max turns)")
-            return self._respond(
-                "已达到最大工具调用次数。基于已有信息给出回答。",
-                AgentState.stopped,
-            )
+            return await self._force_answer()
 
         self._add_trace(AgentState.observing, "tool_result_observed")
         logger.info("Agent observing tool results", extra={"turn": self._step})
         return await self._decide()
+
+    async def _force_answer(self) -> AgentResponse:
+        """Ask the model for a final answer based on all tool results collected so far,
+        without offering any more tools."""
+        tool_schemas: list[dict[str, Any]] | None = None
+        chat_start = time.monotonic()
+
+        response = await self._client.chat(
+            messages=self._memory.as_messages(),
+            tools=tool_schemas,
+        )
+        elapsed = (time.monotonic() - chat_start) * 1000
+        self._memory.consume_tokens(response.usage.get("total_tokens", 0))
+
+        choice = response.choices[0]
+        msg = choice.message
+        answer = msg.get("content", "")
+        self._add_trace(
+            AgentState.answered,
+            "answer_generated",
+            duration_ms=elapsed,
+            token_usage=response.usage,
+        )
+        self._memory.add_assistant(answer)
+        await self._emit("done", {"answer": answer})
+        return self._respond(answer, AgentState.answered)
 
     def _parse_tool_calls(self, raw: list[dict[str, Any]]) -> list[ToolCall]:
         result: list[ToolCall] = []
