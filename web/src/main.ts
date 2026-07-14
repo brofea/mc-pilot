@@ -4,5 +4,6 @@ import router from "./router";
 import "./styles.css";
 import "./theme.css";
 import "./texture.css";
+import "./liquid-glass.css";
 
 createApp(App).use(router).mount("#app");

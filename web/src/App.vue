@@ -16,7 +16,7 @@ const links = [
   <div class="ambient ambient-a" aria-hidden="true" />
   <div class="ambient ambient-b" aria-hidden="true" />
   <div class="app-frame">
-    <header class="topbar">
+    <header class="topbar liquid-topbar">
       <RouterLink class="brand" to="/" aria-label="Minecraft Pilot 首页">
         <img class="brand-logo" src="https://github.com/user-attachments/assets/880c6c14-bf9f-43e6-a8b1-08a37830af9e" alt="" />
         <span><strong>Minecraft Pilot</strong><small>Java 26.2 · Agent</small></span>

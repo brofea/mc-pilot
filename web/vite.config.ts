@@ -2,10 +2,11 @@ import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [vue()],
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
-  base: "/static/app/",
+  // Vite serves locally from `/`; FastAPI serves the compiled app at `/static/app/`.
+  base: command === "serve" ? "/" : "/static/app/",
   build: { outDir: "../src/mc_pilot/static/app", emptyOutDir: true },
   server: {
     proxy: {
@@ -15,4 +16,4 @@ export default defineConfig({
       "/ws": { target: "ws://127.0.0.1:8000", ws: true }
     }
   }
-});
+}));
