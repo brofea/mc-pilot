@@ -13,7 +13,7 @@
 
     <button class="new-chat-btn" id="new-chat-btn">+ 新对话</button>
 
-    <div class="sidebar-section">
+    <div class="sidebar-section sidebar-conversations">
       <h2 class="sidebar-section-title">对话历史</h2>
       <div class="conversation-list" id="conversation-list"></div>
     </div>
@@ -28,10 +28,6 @@
         <span class="status-dot" id="game-dot" data-state="disconnected"></span>
         <span id="game-status-text">未连接游戏</span>
       </div>
-      <div class="status-detail" id="game-detail" hidden>
-        <span id="game-player"></span>
-        <span id="game-version"></span>
-      </div>
       <div class="status-row">
         <span class="status-dot" id="recipes-dot" data-state="connecting"></span>
         <span id="recipes-status-text">配方树算法</span>
@@ -39,6 +35,10 @@
       <div class="status-row">
         <span class="status-dot" id="rag-dot" data-state="connecting"></span>
         <span id="rag-status-text">Wiki RAG</span>
+      </div>
+      <div class="status-detail" id="game-detail" hidden>
+        <span id="game-player"></span>
+        <span id="game-version"></span>
       </div>
       <button class="reconnect-btn" id="reconnect-btn" title="重新扫描游戏日志">
         重连游戏日志
