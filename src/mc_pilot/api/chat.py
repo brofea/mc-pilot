@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -23,6 +24,8 @@ class ChatRequest(BaseModel):
 def create_chat_router(
     agent_service: AgentService,
     store: ConversationStore | None = None,
+    recipe_service: Any = None,
+    wiki_service: Any = None,
 ) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -148,5 +151,23 @@ def create_chat_router(
             if not ok:
                 raise HTTPException(status_code=404, detail="对话不存在")
             return {"updated": True, "title": title}
+
+    @router.get("/recipes-health")
+    async def recipes_health(request: Request) -> dict[str, object]:
+        if recipe_service and hasattr(recipe_service, "get_stats"):
+            stats = recipe_service.get_stats()
+            return {
+                "available": bool(stats.get("available")),
+                "count": stats.get("recipe_count", 0),
+            }
+        return {"available": False, "count": 0}
+
+    @router.get("/rag-health")
+    async def rag_health(request: Request) -> dict[str, object]:
+        if wiki_service and hasattr(wiki_service, "index_stats"):
+            stats = wiki_service.index_stats()
+            exists = bool(stats.get("index_exists"))
+            return {"available": exists, "count": stats.get("chunk_count", 0)}
+        return {"available": False, "count": 0}
 
     return router

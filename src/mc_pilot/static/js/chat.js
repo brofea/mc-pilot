@@ -4,7 +4,6 @@ const pilotInput = document.getElementById("pilot-input");
 const sendBtn = document.getElementById("send-btn");
 const newChatBtn = document.getElementById("new-chat-btn");
 const conversationList = document.getElementById("conversation-list");
-const conversationListSection = document.getElementById("conversation-list-section");
 const contextIndicator = document.getElementById("context-indicator");
 const contextCircle = document.getElementById("context-circle");
 const contextLabel = document.getElementById("context-label");
@@ -17,6 +16,10 @@ const gameStatusText = document.getElementById("game-status-text");
 const gameDetail = document.getElementById("game-detail");
 const gamePlayer = document.getElementById("game-player");
 const gameVersion = document.getElementById("game-version");
+const recipesDot = document.getElementById("recipes-dot");
+const recipesStatusText = document.getElementById("recipes-status-text");
+const ragDot = document.getElementById("rag-dot");
+const ragStatusText = document.getElementById("rag-status-text");
 const reconnectBtn = document.getElementById("reconnect-btn");
 const sidebarToggle = document.getElementById("sidebar-toggle");
 const sidebar = document.getElementById("sidebar");
@@ -417,8 +420,6 @@ async function refreshConversationList() {
     if (!res.ok) return;
     const list = await res.json();
 
-    conversationListSection.hidden = list.length === 0;
-
     conversationList.replaceChildren();
     for (const conv of list) {
       const item = document.createElement("div");
@@ -661,7 +662,29 @@ async function checkHealth() {
   }
 }
 
+async function checkRecipesHealth() {
+  try {
+    const res = await fetch("/api/recipes-health", { signal: AbortSignal.timeout(3000) });
+    const data = await res.json();
+    recipesDot.dataset.state = data.available ? "ready" : "degraded";
+  } catch (_error) {
+    recipesDot.dataset.state = "degraded";
+  }
+}
+
+async function checkRagHealth() {
+  try {
+    const res = await fetch("/api/rag-health", { signal: AbortSignal.timeout(3000) });
+    const data = await res.json();
+    ragDot.dataset.state = data.available ? "ready" : "degraded";
+  } catch (_error) {
+    ragDot.dataset.state = "degraded";
+  }
+}
+
 checkHealth();
+checkRecipesHealth();
+checkRagHealth();
 fetchGameState();
 connectWebSocket();
 refreshConversationList();

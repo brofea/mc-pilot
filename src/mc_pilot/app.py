@@ -121,7 +121,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.mount("/static", StaticFiles(directory=PACKAGE_DIR / "static"), name="static")
     app.include_router(health_router)
     app.include_router(create_page_router(templates))
-    app.include_router(create_chat_router(services["agent"], conversation_store))
+    app.include_router(
+        create_chat_router(
+            services["agent"], conversation_store,
+            services["recipe"], services["wiki"],
+        )
+    )
     app.include_router(create_recipe_router(services["recipe"]))
     app.include_router(create_game_router(services["game"]))
     app.include_router(

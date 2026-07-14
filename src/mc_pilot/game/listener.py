@@ -79,6 +79,8 @@ class GameLogListener:
                 lines = self._tailer.poll()
                 if lines:
                     self._process_lines(lines)
+                else:
+                    self._check_staleness()
                 while not self._death_queue.empty():
                     event = self._death_queue.get_nowait()
                     await self._generate_advice(event)
@@ -88,6 +90,16 @@ class GameLogListener:
 
     def stop(self) -> None:
         self._running = False
+
+    def _check_staleness(self) -> None:
+        if self._state.state != GameConnectionState.connected:
+            return
+        if self._state.last_activity is None:
+            return
+        idle = (datetime.now(UTC) - self._state.last_activity).total_seconds()
+        if idle > 10:
+            self._state.state = GameConnectionState.disconnected
+            logger.info("Game disconnected (stale)")
 
     def _scan_initial(self) -> None:
         recent = self._tailer.read_tail(max_lines=500)

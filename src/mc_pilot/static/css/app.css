@@ -99,6 +99,12 @@ body {
   margin: 0 0 0.5rem;
 }
 
+.sidebar-status {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-800);
+}
+
 /* ---- suggested questions ---- */
 .suggested-questions {
   display: flex;
