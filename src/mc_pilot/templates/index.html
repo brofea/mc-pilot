@@ -13,11 +13,9 @@
 
     <button class="new-chat-btn" id="new-chat-btn">+ 新对话</button>
 
-    <div class="sidebar-section">
-      <h2 class="sidebar-section-title">快捷命令</h2>
-      <button class="cmd-chip" data-cmd="/pilot help">帮助</button>
-      <button class="cmd-chip" data-cmd="/pilot status">运行状态</button>
-      <button class="cmd-chip" data-cmd="/pilot clear">清除记忆</button>
+    <div class="sidebar-section" id="conversation-list-section" hidden>
+      <h2 class="sidebar-section-title">对话历史</h2>
+      <div class="conversation-list" id="conversation-list"></div>
     </div>
 
     <div class="sidebar-section">
@@ -51,8 +49,15 @@
       <div class="chat-welcome">
         <div class="welcome-icon">&#9752;</div>
         <h2>Minecraft Pilot 已就位</h2>
-        <p>输入 <code>/pilot help</code> 查看命令，或直接提问。</p>
+        <p>输入问题即可开始，比如：</p>
       </div>
+    </div>
+
+    <div class="suggested-questions" id="suggested-questions">
+      <button class="suggest-chip" data-prompt="附魔金苹果的配方是？">附魔金苹果的配方是？</button>
+      <button class="suggest-chip" data-prompt="介绍一下亮度机制">介绍一下亮度机制</button>
+      <button class="suggest-chip" data-prompt="苍白橡木在哪里获得？">苍白橡木在哪里获得？</button>
+      <button class="suggest-chip" data-prompt="鞘翅怎么获得？">鞘翅怎么获得？</button>
     </div>
 
     <div class="chat-input-bar">
@@ -61,10 +66,23 @@
           <textarea
             id="pilot-input"
             name="message"
-            placeholder="输入 /pilot 命令或问题…"
+            placeholder="输入问题…"
             rows="1"
             autofocus
           ></textarea>
+          <div class="context-indicator" id="context-indicator" title="">
+            <svg width="36" height="36" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="14" fill="none"
+                stroke="var(--gray-800)" stroke-width="3" />
+              <circle cx="18" cy="18" r="14" fill="none"
+                stroke="var(--accent)" stroke-width="3"
+                stroke-linecap="round"
+                stroke-dasharray="0 88"
+                id="context-circle"
+                transform="rotate(-90 18 18)" />
+            </svg>
+            <span class="context-label" id="context-label">0%</span>
+          </div>
           <button type="submit" id="send-btn" aria-label="发送消息">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="22" y1="2" x2="11" y2="13"></line>
