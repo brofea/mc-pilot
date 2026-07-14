@@ -110,4 +110,4 @@ class SessionMemory(BaseModel):
 
     turns: list[AgentTurn] = Field(default_factory=list, max_length=6)
     daily_tokens: int = 0
-    daily_limit: int = 200_000
+    daily_limit: int = 500_000

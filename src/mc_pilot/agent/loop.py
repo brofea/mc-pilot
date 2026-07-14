@@ -1,4 +1,4 @@
-"""Bounded agent state machine with tool-call loop."""
+"""Bounded agent state machine with tool-call loop and streaming events."""
 
 from __future__ import annotations
 
@@ -23,10 +23,10 @@ from mc_pilot.agent.tools import TOOL_WHITELIST
 
 logger = logging.getLogger(__name__)
 
-MAX_TOOL_TURNS = 6
-
+MAX_TOOL_TURNS = 12
 
 type ToolExecutor = Callable[[str, dict[str, Any]], Awaitable[str]]
+type EventEmitter = Callable[[str, dict[str, Any]], Awaitable[None]] | None
 
 
 class AgentLoop:
@@ -41,6 +41,7 @@ class AgentLoop:
     _state: AgentState
     _stop_reason: str | None
     _wiki_search_count: int
+    _on_event: EventEmitter
 
     def __init__(
         self,
@@ -48,6 +49,7 @@ class AgentLoop:
         memory: ConversationMemory,
         tool_executor: ToolExecutor,
         exported_tools: list[ToolMessage],
+        on_event: EventEmitter = None,
     ) -> None:
         self._client = client
         self._memory = memory
@@ -58,6 +60,11 @@ class AgentLoop:
         self._state = AgentState.received
         self._stop_reason = None
         self._wiki_search_count = 0
+        self._on_event = on_event
+
+    async def _emit(self, event_type: str, data: dict[str, Any]) -> None:
+        if self._on_event:
+            await self._on_event(event_type, data)
 
     async def run(self, user_message: str) -> AgentResponse:
         self._memory.strip_tool_context()
@@ -75,19 +82,23 @@ class AgentLoop:
             )
 
         logger.info("Agent loop started")
+        await self._emit("status", {"text": "正在分析问题…"})
         try:
             return await self._decide()
         except Exception as exc:
             logger.error("Agent loop failed", extra={"error": str(exc)})
             self._add_trace(AgentState.failed, "unhandled_error", error_type=type(exc).__name__)
+            await self._emit("error", {"message": str(exc)})
             return self._respond("内部错误，请重试。", AgentState.failed)
 
     async def _decide(self) -> AgentResponse:
         self._state = AgentState.deciding
         self._add_trace(AgentState.deciding, "model_inference_started")
 
-        tool_schemas = DeepSeekClient.build_tool_schema(self._exported_tools)
-        if self._wiki_search_count >= 3:
+        await self._emit("thinking", {"text": "思考中…"})
+        schemas = DeepSeekClient.build_tool_schema(self._exported_tools)
+        tool_schemas: list[dict[str, Any]] | None = schemas
+        if self._wiki_search_count >= 2:
             tool_schemas = None
         chat_start = time.monotonic()
 
@@ -137,6 +148,7 @@ class AgentLoop:
             token_usage=response.usage,
         )
         self._memory.add_assistant(answer)
+        await self._emit("done", {"answer": answer})
         return self._respond(answer, AgentState.answered)
 
     async def _execute_tool(self, tool_call: ToolCall) -> ToolResult:
@@ -148,8 +160,25 @@ class AgentLoop:
             tool_args_summary=json.dumps(tool_call.arguments, ensure_ascii=False)[:200],
         )
 
+        tool_label = {
+            "wiki_search": "搜索 Wiki 知识库",
+            "recipe_query": "查询合成配方",
+            "recipe_direct": "查询直接配方",
+        }.get(tool_call.name, tool_call.name)
+
+        await self._emit("tool_start", {
+            "name": tool_call.name,
+            "label": tool_label,
+            "arguments": tool_call.arguments,
+        })
+
         if tool_call.name not in TOOL_WHITELIST:
             logger.warning("Tool blocked by whitelist", extra={"tool": tool_call.name})
+            await self._emit("tool_end", {
+                "name": tool_call.name,
+                "success": False,
+                "summary": f"未知工具: {tool_call.name}",
+            })
             return ToolResult(
                 tool_call_id=tool_call.id,
                 name=tool_call.name,
@@ -169,12 +198,17 @@ class AgentLoop:
             logger.info("Tool completed", extra={"tool": tool_call.name})
             if tool_call.name == "wiki_search":
                 self._wiki_search_count += 1
-                if self._wiki_search_count >= 3:
+                if self._wiki_search_count >= 2:
                     hint = (
                         "[系统提示] 已进行多次 Wiki 搜索，信息充足，"
                         "请立即基于已有结果给出回答。不要再搜索了。"
                     )
                     content += "\n\n" + hint
+            await self._emit("tool_end", {
+                "name": tool_call.name,
+                "success": True,
+                "summary": content[:200] + ("…" if len(content) > 200 else ""),
+            })
             return ToolResult(
                 tool_call_id=tool_call.id,
                 name=tool_call.name,
@@ -183,6 +217,11 @@ class AgentLoop:
             )
         except Exception as exc:
             logger.error("Tool failed", extra={"tool": tool_call.name, "error": str(exc)})
+            await self._emit("tool_end", {
+                "name": tool_call.name,
+                "success": False,
+                "summary": str(exc),
+            })
             return ToolResult(
                 tool_call_id=tool_call.id,
                 name=tool_call.name,
@@ -207,7 +246,7 @@ class AgentLoop:
                 AgentState.stopped,
             )
 
-            self._add_trace(AgentState.observing, "tool_result_observed")
+        self._add_trace(AgentState.observing, "tool_result_observed")
         logger.info("Agent observing tool results", extra={"turn": self._step})
         return await self._decide()
 

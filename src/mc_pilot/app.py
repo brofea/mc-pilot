@@ -31,7 +31,7 @@ from mc_pilot.logging_config import configure_logging
 from mc_pilot.rag.service import WikiService
 from mc_pilot.recipes.service import RecipeService
 from mc_pilot.storage.qdrant import QdrantProbe
-from mc_pilot.storage.sqlite import create_sqlite_engine, initialize_database
+from mc_pilot.storage.sqlite import ConversationStore, create_sqlite_engine, initialize_database
 
 logger = logging.getLogger(__name__)
 PACKAGE_DIR = Path(__file__).resolve().parent
@@ -65,7 +65,7 @@ def _build_services(settings: Settings, sqlite_engine: Any) -> dict[str, Any]:
             base_url=settings.deepseek_base_url,
             api_key=api_key,
             model=settings.deepseek_model,
-            max_tokens=200,
+            max_tokens=400,
         )
         if api_key
         else None
@@ -84,6 +84,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     resolved_settings = settings or get_settings()
     configure_logging(resolved_settings.log_level)
     sqlite_engine = create_sqlite_engine(resolved_settings.sqlite_url)
+    conversation_store = ConversationStore(sqlite_engine)
     qdrant_probe = QdrantProbe(
         url=resolved_settings.qdrant_url,
         timeout_seconds=resolved_settings.qdrant_timeout_seconds,
@@ -112,6 +113,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = resolved_settings
     app.state.sqlite_engine = sqlite_engine
+    app.state.conversation_store = conversation_store
     app.state.qdrant_probe = qdrant_probe
     app.state.services = services
 
@@ -119,7 +121,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.mount("/static", StaticFiles(directory=PACKAGE_DIR / "static"), name="static")
     app.include_router(health_router)
     app.include_router(create_page_router(templates))
-    app.include_router(create_chat_router(services["agent"]))
+    app.include_router(create_chat_router(services["agent"], conversation_store))
     app.include_router(create_recipe_router(services["recipe"]))
     app.include_router(create_game_router(services["game"]))
     app.include_router(

@@ -9,8 +9,8 @@ from mc_pilot.recipes.models import Ingredient, MaterialNode, RecipeInfo
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MAX_NODES = 5000
-DEFAULT_MAX_DEPTH = 50
+DEFAULT_MAX_NODES = 20000
+DEFAULT_MAX_DEPTH = 100
 
 
 @dataclass

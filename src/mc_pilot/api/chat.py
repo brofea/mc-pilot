@@ -1,23 +1,29 @@
-"""Chat and /pilot command HTTP routes."""
+"""Chat and /pilot command HTTP routes with SSE streaming."""
 
 from __future__ import annotations
 
+import json
 import logging
 
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from mc_pilot.agent.service import AgentService
+from mc_pilot.storage.sqlite import ConversationStore
 
 logger = logging.getLogger(__name__)
 
 
 class ChatRequest(BaseModel):
     message: str
-    session_id: str = "default"
+    conversation_id: str = ""
 
 
-def create_chat_router(agent_service: AgentService) -> APIRouter:
+def create_chat_router(
+    agent_service: AgentService,
+    store: ConversationStore | None = None,
+) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["chat"])
 
     @router.post("/chat")
@@ -29,14 +35,118 @@ def create_chat_router(agent_service: AgentService) -> APIRouter:
         except Exception as exc:
             logger.error("Chat failed", extra={"error": str(exc)})
             raise HTTPException(status_code=500, detail="内部错误") from exc
+
+        if store and body.conversation_id:
+            store.add_message(body.conversation_id, "user", body.message)
+            store.add_message(body.conversation_id, "assistant", result.answer)
+            conv = store.get_conversation(body.conversation_id)
+            if conv and str(conv.get("title")) == "新对话" and body.message:
+                title = body.message[:50]
+                store.update_title(body.conversation_id, title)
+
         return {
             "state": result.state,
             "answer": result.answer,
             "stop_reason": result.stop_reason,
+            "tokens_used": agent_service.memory.daily_tokens,
+            "tokens_limit": agent_service.memory.daily_limit,
+            "turns_used": len(agent_service.memory._turns),
         }
+
+    @router.post("/chat/stream")
+    async def chat_stream(body: ChatRequest, request: Request) -> StreamingResponse:
+        if not body.message.strip():
+            raise HTTPException(status_code=400, detail="消息不能为空")
+
+        user_message = body.message
+
+        # Load conversation history from DB if a conversation_id is provided
+        history: list[dict[str, str]] | None = None
+        if store and body.conversation_id:
+            msgs = store.get_messages(body.conversation_id)
+            history = [
+                {"role": str(m["role"]), "content": str(m["content"])}
+                for m in msgs
+            ]
+
+        async def generate():  # type: ignore[no-untyped-def]
+            full_answer = ""
+            try:
+                async for event in agent_service.handle_pilot_stream(
+                    user_message, history
+                ):
+                    full_answer = event.get("answer", full_answer)
+                    yield (
+                        "data: "
+                        + json.dumps(event, ensure_ascii=False)
+                        + "\n\n"
+                    )
+
+                if store and body.conversation_id:
+                    store.add_message(body.conversation_id, "user", user_message)
+                    if full_answer:
+                        store.add_message(body.conversation_id, "assistant", full_answer)
+                    conv = store.get_conversation(body.conversation_id)
+                    if conv and str(conv.get("title")) == "新对话" and user_message:
+                        title = user_message[:50]
+                        store.update_title(body.conversation_id, title)
+
+                yield "data: [DONE]\n\n"
+            except Exception as exc:
+                logger.error("Chat stream failed", extra={"error": str(exc)})
+                err_payload = json.dumps(
+                    {"type": "error", "message": str(exc)},
+                    ensure_ascii=False,
+                )
+                yield f"data: {err_payload}\n\n"
+
+        return StreamingResponse(
+            generate(),  # type: ignore[no-untyped-call]
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     @router.get("/agent-status")
     async def agent_status(request: Request) -> dict[str, object]:
         return {"configured": agent_service.is_configured()}
+
+    if store:
+        @router.get("/conversations")
+        async def list_conversations(request: Request) -> list[dict[str, object]]:
+            return store.list_conversations()
+
+        @router.post("/conversations")
+        async def create_conversation(request: Request) -> dict[str, object]:
+            return store.create_conversation()
+
+        @router.get("/conversations/{conv_id}")
+        async def get_conversation(conv_id: str, request: Request) -> dict[str, object]:
+            conv = store.get_conversation(conv_id)
+            if conv is None:
+                raise HTTPException(status_code=404, detail="对话不存在")
+            return conv
+
+        @router.delete("/conversations/{conv_id}")
+        async def delete_conversation(conv_id: str, request: Request) -> dict[str, object]:
+            ok = store.delete_conversation(conv_id)
+            if not ok:
+                raise HTTPException(status_code=404, detail="对话不存在")
+            return {"deleted": True}
+
+        @router.patch("/conversations/{conv_id}")
+        async def update_conversation_title(
+            conv_id: str, body: dict[str, object], request: Request
+        ) -> dict[str, object]:
+            title = str(body.get("title", ""))
+            if not title:
+                raise HTTPException(status_code=400, detail="标题不能为空")
+            ok = store.update_title(conv_id, title)
+            if not ok:
+                raise HTTPException(status_code=404, detail="对话不存在")
+            return {"updated": True, "title": title}
 
     return router

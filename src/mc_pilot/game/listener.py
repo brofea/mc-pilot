@@ -19,7 +19,7 @@ from mc_pilot.game.tailer import LogTailer
 logger = logging.getLogger(__name__)
 
 POLL_INTERVAL_SECONDS = 1.0
-MAX_DEATH_TOKENS = 200
+MAX_DEATH_TOKENS = 400
 DEATH_SYSTEM_PROMPT = (
     "你是 Minecraft 游戏助手。玩家刚刚死亡，请用 2-5 句简短的话给出建议。"
     "不要长篇大论，不要安慰过度，直接给出有用的生存提示。使用中文回答。"

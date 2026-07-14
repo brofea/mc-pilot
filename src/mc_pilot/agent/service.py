@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator
 from typing import Any
 
 from mc_pilot.agent.client import DeepSeekClient
@@ -16,6 +17,7 @@ from mc_pilot.agent.models import (
     ToolMessage,
 )
 from mc_pilot.agent.tools import (
+    GET_STATUS_TOOL,
     RECIPE_DIRECT_TOOL,
     RECIPE_QUERY_TOOL,
     WIKI_SEARCH_TOOL,
@@ -75,9 +77,7 @@ class AgentService:
                 error=str(exc),
             )
 
-    async def handle_pilot(
-        self, message: str
-    ) -> AgentResponse:
+    async def handle_pilot(self, message: str) -> AgentResponse:
         stripped = message.removeprefix("/pilot").strip()
         parts = stripped.split(maxsplit=1)
         command = parts[0].lower() if parts else ""
@@ -86,24 +86,84 @@ class AgentService:
             return await self._handle_wiki_direct(parts[1] if len(parts) > 1 else "")
         elif command == "recipe":
             return await self._handle_recipe_direct(parts[1] if len(parts) > 1 else "")
-        elif command == "status":
-            return self._handle_status()
-        elif command == "help":
-            return self._handle_help()
-        elif command == "clear":
-            return self._handle_clear()
         else:
-            return await self._run_agent(stripped)
+            return await self._run_agent(message)
 
-    async def _run_agent(self, user_message: str) -> AgentResponse:
+    async def handle_pilot_stream(
+        self, message: str, history: list[dict[str, str]] | None = None
+    ) -> AsyncIterator[dict[str, Any]]:
+        stripped = message.removeprefix("/pilot").strip()
+        parts = stripped.split(maxsplit=1)
+        command = parts[0].lower() if parts else ""
+
+        if command in ("wiki", "recipe"):
+            result = await self.handle_pilot(message)
+            yield {"type": "done", "answer": result.answer, "state": result.state.value}
+            return
+
+        memory = self._memory.detach()
+        if history:
+            memory.load_history(history)
+        token_before = memory.daily_tokens
+
+        event_queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
+
+        async def on_event(event_type: str, data: dict[str, Any]) -> None:
+            await event_queue.put({"type": event_type, **data})
+
         client = self._build_client()
         loop = AgentLoop(
             client=client,
-            memory=self._memory,
+            memory=memory,
+            tool_executor=self._tool_executor,
+            exported_tools=self._get_tools(),
+            on_event=on_event,
+        )
+
+        async def run_agent() -> None:
+            try:
+                result = await loop.run(message)
+                delta = memory.daily_tokens - token_before
+                if delta > 0:
+                    self._memory.consume_tokens(delta)
+                await event_queue.put({
+                    "type": "result",
+                    "answer": result.answer,
+                    "state": result.state.value,
+                    "stop_reason": result.stop_reason,
+                    "tokens_used": memory.daily_tokens,
+                    "tokens_limit": memory.daily_limit,
+                })
+            except Exception as exc:
+                await event_queue.put({"type": "error", "message": str(exc)})
+            finally:
+                await event_queue.put(None)
+
+        task = asyncio.create_task(run_agent())
+
+        while True:
+            event = await event_queue.get()
+            if event is None:
+                break
+            yield event
+
+        await task
+
+    async def _run_agent(self, user_message: str) -> AgentResponse:
+        memory = self._memory.detach()
+        token_before = memory.daily_tokens
+        client = self._build_client()
+        loop = AgentLoop(
+            client=client,
+            memory=memory,
             tool_executor=self._tool_executor,
             exported_tools=self._get_tools(),
         )
-        return await loop.run(user_message)
+        result = await loop.run(user_message)
+        delta = memory.daily_tokens - token_before
+        if delta > 0:
+            self._memory.consume_tokens(delta)
+        return result
 
     async def _handle_wiki_direct(self, query: str) -> AgentResponse:
         if not self._wiki_service:
@@ -116,36 +176,6 @@ class AgentService:
             return AgentResponse(state=AgentState.answered, answer="配方服务尚未初始化。")
         result = await self._tool_executor("recipe_query", {"item_id": item_id})
         return AgentResponse(state=AgentState.answered, answer=result)
-
-    def _handle_status(self) -> AgentResponse:
-        tokens = self._memory.daily_tokens
-        limit = self._memory.daily_limit
-        return AgentResponse(
-            state=AgentState.answered,
-            answer=(
-                f"Minecraft Pilot 运行中\n"
-                f"模型: {self._deepseek_model}\n"
-                f"每日 Token: {tokens}/{limit}\n"
-                f"剩余会话: 可用"
-            ),
-        )
-
-    def _handle_help(self) -> AgentResponse:
-        return AgentResponse(
-            state=AgentState.answered,
-            answer=(
-                "/pilot - 进入 Agent\n"
-                "/pilot wiki <关键词> - 搜索 Wiki 知识库\n"
-                "/pilot recipe <物品ID> - 查询合成配方\n"
-                "/pilot status - 查看运行状态\n"
-                "/pilot clear - 清除会话记忆\n"
-                "/pilot help - 显示此帮助"
-            ),
-        )
-
-    def _handle_clear(self) -> AgentResponse:
-        self._memory.clear()
-        return AgentResponse(state=AgentState.answered, answer="会话记忆已清除。")
 
     def _build_client(self) -> DeepSeekClient:
         return DeepSeekClient(
@@ -168,6 +198,8 @@ class AgentService:
         elif name == "recipe_direct":
             item_id = str(arguments.get("item_id", ""))
             return await self._execute_recipe_direct(item_id)
+        elif name == "get_status":
+            return self._handle_status()
         else:
             raise ValueError(f"未知工具: {name}")
 
@@ -175,7 +207,7 @@ class AgentService:
         if not self._wiki_service:
             return "Wiki 知识库尚未构建。"
         result = await asyncio.to_thread(
-            self._wiki_service.retrieve, query, top_k=min(top_k, 10)
+            self._wiki_service.retrieve, query, top_k=min(top_k, 15)
         )
         if result.insufficient_evidence:
             return "知识库未找到足够依据。"
@@ -208,8 +240,28 @@ class AgentService:
             parts.append(f"  - {r.recipe_id} ({r.recipe_type}): {r.result_count}个")
         return "\n".join(parts)
 
+    def _handle_status(self) -> str:
+        tokens = self._memory.daily_tokens
+        limit = self._memory.daily_limit
+        pct = round(tokens / limit * 100, 1) if limit > 0 else 0
+        return (
+            f"**Minecraft Pilot 运行状态**\n\n"
+            f"- 模型: {self._deepseek_model}\n"
+            f"- Token 用量: {tokens:,} / {limit:,} ({pct}%)\n"
+            f"- 状态: {'已达上限' if self._memory.is_over_budget else '正常运行'}\n"
+        )
+
     def _get_tools(self) -> list[ToolMessage]:
-        return [WIKI_SEARCH_TOOL, RECIPE_QUERY_TOOL, RECIPE_DIRECT_TOOL]
+        return [
+            WIKI_SEARCH_TOOL,
+            RECIPE_QUERY_TOOL,
+            RECIPE_DIRECT_TOOL,
+            GET_STATUS_TOOL,
+        ]
+
+    @property
+    def memory(self) -> ConversationMemory:
+        return self._memory
 
     @staticmethod
     def _format_recipe_tree(tree_result: Any) -> str:

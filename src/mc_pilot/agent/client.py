@@ -55,7 +55,7 @@ class DeepSeekClient:
         api_key: str,
         model: str = "deepseek-v4-flash",
         timeout_seconds: float = 60.0,
-        max_tokens: int = 800,
+        max_tokens: int = 1600,
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
