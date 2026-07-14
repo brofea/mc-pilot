@@ -21,6 +21,7 @@ RUN python -m pip install --root-user-action=ignore --upgrade pip \
         sqlalchemy==2.0.43 \
         'uvicorn[standard]==0.35.0'
 
+COPY data/mc_pilot.db /app/data/mc_pilot.db
 COPY README.md ./
 COPY src ./src
 COPY scripts ./scripts
@@ -43,4 +44,6 @@ USER app
 
 EXPOSE 8000
 
+COPY scripts/docker_init.py /app/docker_init.py
+ENTRYPOINT ["python", "/app/docker_init.py"]
 CMD ["uvicorn", "mc_pilot.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

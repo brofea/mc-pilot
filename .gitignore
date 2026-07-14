@@ -8,6 +8,24 @@ __pycache__/
 .coverage
 htmlcov/
 *.egg-info/
-data/
-models/
 *.log
+
+# Development tooling (local only)
+.trellis/
+.codex/
+.agents/
+.vscode/
+*.swp
+*.swo
+
+# Data — recipe DB is committed, everything else is runtime
+data/*
+!data/mc_pilot.db
+
+# HuggingFace model cache
+models/
+
+# Fabric mod build artifacts
+fabric-mod/.gradle/
+fabric-mod/build/
+fabric-mod/run/

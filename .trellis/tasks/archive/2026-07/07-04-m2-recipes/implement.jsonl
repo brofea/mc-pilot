@@ -1,4 +1,0 @@
-{"file":".trellis/spec/backend/index.md","reason":"Project backend contracts and pre-development checklist."}
-{"file":".trellis/spec/frontend/index.md","reason":"Project web/client conventions where applicable."}
-{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Keep API/event/data contracts consistent across consumers."}
-{"file":".trellis/tasks/07-04-minecraft-pilot-agent/research/technical-sources.md","reason":"Primary-source platform and dependency constraints."}
