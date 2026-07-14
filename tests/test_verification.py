@@ -88,7 +88,7 @@ def test_tool_whitelist_blocks_unknown_tools() -> None:
     assert "wiki_search" in TOOL_WHITELIST
     assert "recipe_query" in TOOL_WHITELIST
     assert "recipe_direct" in TOOL_WHITELIST
-    assert len(TOOL_WHITELIST) == 3
+    assert len(TOOL_WHITELIST) == 4
 
 
 def test_conversation_memory_token_budget_exceeded() -> None:

@@ -161,7 +161,7 @@ def test_session_memory_model() -> None:
     sm = SessionMemory()
     assert sm.turns == []
     assert sm.daily_tokens == 0
-    assert sm.daily_limit == 200_000
+    assert sm.daily_limit == 500_000
 
 
 def test_agent_turn_model() -> None:
