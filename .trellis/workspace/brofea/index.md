@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 3
-- **Last Active**: 2026-07-04
+- **Total Sessions**: 4
+- **Last Active**: 2026-07-14
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~108 | Active |
+| `journal-1.md` | ~143 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 4 | 2026-07-14 | Streaming Agent, Conversation Management & UX Polish | `ae40ec5`, `17d78cf`, `125c2b8` | `main` |
 | 3 | 2026-07-04 | README delivery rewrite | `aa1655f` | `main` |
 | 2 | 2026-07-04 | 最终验收修复与完整交付 | `3cee862`, `0bcf8cd` | `main` |
 | 1 | 2026-07-04 | M1 工程与 Docker 骨架 | `c0a3f7b`, `fad51c1` | `main` |
