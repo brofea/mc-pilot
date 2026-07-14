@@ -29,3 +29,7 @@ models/
 fabric-mod/.gradle/
 fabric-mod/build/
 fabric-mod/run/
+
+# Vue build output
+web/node_modules/
+src/mc_pilot/static/app/

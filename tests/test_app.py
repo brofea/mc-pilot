@@ -29,15 +29,10 @@ def test_readiness_reports_degraded_dependency(client: TestClient) -> None:
     ]
 
 
-@pytest.mark.parametrize(
-    ("path", "heading"),
-    [("/", "Minecraft Pilot"), ("/admin", "开发者后台")],
-)
-def test_pages_render_without_frontend_build(
-    client: TestClient, path: str, heading: str
-) -> None:
+@pytest.mark.parametrize("path", ["/", "/admin", "/knowledge", "/recipes"])
+def test_spa_page_routes_render_without_secret(client: TestClient, path: str) -> None:
     response = client.get(path)
 
     assert response.status_code == 200
-    assert heading in response.text
+    assert "Minecraft Pilot" in response.text
     assert "DEEPSEEK_API_KEY" not in response.text

@@ -11,6 +11,8 @@ __pycache__
 data/*
 !data/mc_pilot.db
 models
+web/node_modules
+src/mc_pilot/static/app
 docs
 *.log
 *.egg-info

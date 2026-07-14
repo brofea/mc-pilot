@@ -120,7 +120,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     templates = Jinja2Templates(directory=PACKAGE_DIR / "templates")
     app.mount("/static", StaticFiles(directory=PACKAGE_DIR / "static"), name="static")
     app.include_router(health_router)
-    app.include_router(create_page_router(templates))
     app.include_router(
         create_chat_router(
             services["agent"], conversation_store,
@@ -138,6 +137,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             agent_service=services["agent"],
         )
     )
+    app.include_router(create_page_router(templates, PACKAGE_DIR / "static" / "app"))
 
     @app.exception_handler(AppError)
     async def handle_app_error(request: Request, error: AppError) -> JSONResponse:
