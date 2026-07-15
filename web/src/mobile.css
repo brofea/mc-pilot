@@ -3,7 +3,7 @@
 .service-status p{margin:0 0 9px;color:var(--moss);font-family:"ZCOOL QingKe HuangYou","LXGW WenKai",serif;font-size:17px;letter-spacing:.08em}
 
 @media(min-width:901px){
-  .conversation-rail>.service-card.liquid-service{position:static;left:auto;bottom:auto;width:245px;max-width:100%;margin-top:auto;align-self:start}
+  .conversation-rail>.service-card.liquid-service{position:static;left:auto;bottom:auto;width:245px;max-width:100%;height:fit-content;min-height:0;margin-top:auto;align-self:start;flex:0 0 auto}
 }
 
 @media(max-width:900px){
