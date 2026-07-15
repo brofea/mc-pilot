@@ -13,6 +13,7 @@ const conversations = ref<Conversation[]>([]); const activeId = ref(""); const m
 const draft = ref(""); const loading = ref(false); const status = ref("Pilot 已就位"); const traces = ref<Trace[]>([]);
 const game = ref<Record<string, unknown>>({ state: "disconnected" }); const error = ref(""); const expanded = ref(false); let socket: WebSocket | undefined;
 const services = ref({ api: "connecting", game: "disconnected", recipes: "connecting", rag: "connecting" });
+const mobileConversationList = ref<HTMLDivElement | null>(null);
 const drawer = inject(mobileDrawerKey);
 if (!drawer) throw new Error("Mobile drawer state is not available");
 const mobileDrawerOpen = computed(() => drawer.open.value);
@@ -28,6 +29,9 @@ function eventToTrace(event: StreamEvent) {
   if (event.type === "tool_start") traces.value.push({ label: String(event.label ?? event.name ?? "调用工具"), detail: String(event.detail ?? ""), done: false });
   if (event.type === "tool_end" && traces.value.length) { const last = traces.value.at(-1)!; last.done = true; last.success = Boolean(event.success); }
   if (event.type === "error") error.value = String(event.message ?? "请求出现问题");
+}
+function scrollMobileConversations(event: WheelEvent) {
+  mobileConversationList.value?.scrollBy({ top: event.deltaY });
 }
 async function send() {
   const text = draft.value.trim(); if (!text || loading.value) return;
@@ -47,11 +51,11 @@ onMounted(async () => { try { await refresh(); await refreshServices(); connect(
 <template>
   <section class="chat-layout">
     <Teleport v-if="mobileDrawerOpen" to="#mobile-drawer-content">
-      <div class="mobile-drawer-chat-content">
+      <div class="mobile-drawer-chat-content" @wheel.prevent="scrollMobileConversations">
         <div class="mobile-drawer-conversations">
           <button class="primary-action" type="button" @click="newChat(); closeMobileDrawer()"><Plus :size="18" />新对话</button>
           <p class="rail-label">最近对话</p>
-          <div class="conversation-list">
+          <div ref="mobileConversationList" class="conversation-list">
             <button v-for="item in conversations" :key="item.id" type="button" class="conversation" :class="{ active: item.id === activeId }" @click="select(item); closeMobileDrawer()"><span>{{ item.title || "新对话" }}</span><Trash2 :size="15" class="delete" @click.stop="remove(item.id)" aria-label="删除对话" /></button>
           </div>
         </div>
