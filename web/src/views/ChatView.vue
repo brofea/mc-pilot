@@ -66,7 +66,7 @@ onMounted(async () => { try { await refresh(); await refreshServices(); connect(
           <span>{{ item.title || "新对话" }}</span><Trash2 :size="15" class="delete" @click.stop="remove(item.id)" aria-label="删除对话" />
         </button>
       </div>
-      <ServiceStatus :services="services" @reconnect="reconnectGame" />
+      <ServiceStatus card :services="services" @reconnect="reconnectGame" />
     </aside>
     <div class="chat-stage">
       <header class="page-intro"><p class="eyebrow">AGENT WORKSPACE</p><h1>{{ activeTitle }}</h1><p>从配方到 Wiki，让 Pilot 和你一起探索。</p></header>
