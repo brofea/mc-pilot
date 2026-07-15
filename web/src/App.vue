@@ -2,6 +2,7 @@
 import { provide, ref, watch } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { Heart, Menu, X } from "lucide-vue-next";
+import brandIcon from "@/assets/minecraft-pilot-icon.png";
 import LiquidGlass from "@/components/LiquidGlass.vue";
 import { mobileDrawerKey } from "@/lib/mobileDrawer";
 import { navigationLinks } from "@/lib/navigation";
@@ -22,7 +23,7 @@ watch(route, closeMobileDrawer);
     <LiquidGlass as="header" filter-id="topbar-liquid-filter" class="topbar liquid-topbar">
       <button class="mobile-menu-button" type="button" aria-label="打开菜单" aria-controls="mobile-navigation-drawer" :aria-expanded="mobileDrawerOpen" @click="toggleMobileDrawer"><Menu :size="24" /></button>
       <RouterLink class="brand" to="/" aria-label="Minecraft Pilot 首页">
-        <img class="brand-logo" src="https://github.com/user-attachments/assets/880c6c14-bf9f-43e6-a8b1-08a37830af9e" alt="" />
+        <img class="brand-logo" :src="brandIcon" alt="" />
         <span><strong>Minecraft Pilot</strong><small>Java 26.2 · Agent</small></span>
       </RouterLink>
       <nav aria-label="主导航" class="desktop-nav">
