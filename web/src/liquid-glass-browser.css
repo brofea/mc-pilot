@@ -1,0 +1,10 @@
+/* Firefox supports SVG references in the standard backdrop-filter property. */
+@supports (backdrop-filter: blur(1px)) {
+  .liquid-glass-effect{backdrop-filter:var(--liquid-filter) saturate(var(--liquid-saturation))}
+}
+
+/* WebKit currently drops SVG url() references in backdrop-filter, so retain its
+   native blurred-glass surface instead of rendering a transparent, broken layer. */
+@supports (-webkit-backdrop-filter: blur(1px)) {
+  .liquid-glass-effect{-webkit-backdrop-filter:blur(18px) saturate(var(--liquid-saturation))}
+}
