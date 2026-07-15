@@ -9,6 +9,7 @@ __pycache__/
 htmlcov/
 *.egg-info/
 *.log
+.playwright-cli/
 
 # Development tooling (local only)
 .trellis/

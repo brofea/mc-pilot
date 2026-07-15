@@ -4,6 +4,7 @@ import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { Plus, RotateCw, Send, Sparkles, Trash2, Wifi, WifiOff } from "lucide-vue-next";
 import { api, type Conversation, type Message, type StreamEvent } from "@/lib/api";
+import LiquidGlass from "@/components/LiquidGlass.vue";
 
 type Trace = { label: string; detail: string; done: boolean; success?: boolean };
 const conversations = ref<Conversation[]>([]); const activeId = ref(""); const messages = ref<Message[]>([]);
@@ -56,8 +57,8 @@ onMounted(async () => { try { await refresh(); await refreshServices(); connect(
         <div v-if="loading || traces.length" class="trace-card"><button type="button" class="trace-summary" :aria-expanded="loading || expanded" :disabled="loading" @click="!loading && (expanded = !expanded)"><span class="pulse" /><span>{{ status }}</span><span v-if="!loading" class="trace-toggle">{{ expanded ? "收起" : "查看轨迹" }}</span></button><ol v-if="(loading || expanded) && traces.length"><li v-for="(trace, index) in traces" :key="index"><Wifi v-if="trace.success" :size="15" /><WifiOff v-else :size="15" />{{ trace.label }}<small>{{ trace.detail }}</small></li></ol></div>
       </div>
       <p v-if="error" class="error-note" role="alert">{{ error }}</p>
-      <form class="composer liquid-composer" @submit.prevent="send"><label class="sr-only" for="prompt">向 Pilot 提问</label><textarea id="prompt" v-model="draft" :disabled="loading" rows="1" placeholder="问问 Minecraft 世界…" @keydown.enter.exact.prevent="send" /><button class="send-button" type="submit" :disabled="loading || !draft.trim()" aria-label="发送"><Send :size="18" /></button></form>
+      <LiquidGlass as="form" filter-id="composer-liquid-filter" class="composer liquid-composer" @submit.prevent="send"><label class="sr-only" for="prompt">向 Pilot 提问</label><textarea id="prompt" v-model="draft" :disabled="loading" rows="1" placeholder="问问 Minecraft 世界…" @keydown.enter.exact.prevent="send" /><button class="send-button" type="submit" :disabled="loading || !draft.trim()" aria-label="发送"><Send :size="18" /></button></LiquidGlass>
     </div>
-    <section class="service-card liquid-service" aria-label="服务状态"><p>服务状态</p><div v-for="(value, name) in services" :key="name" class="service-row"><span :class="['signal', value === 'ready' || value === 'connected' ? 'online' : value === 'degraded' ? 'warn' : '']" /><span>{{ name === 'api' ? 'Pilot 服务' : name === 'game' ? '游戏连接' : name === 'recipes' ? '配方树算法' : 'Wiki RAG' }}</span></div><button type="button" class="reconnect" @click="reconnectGame"><RotateCw :size="14" />重新扫描游戏日志</button></section>
+    <LiquidGlass as="section" filter-id="service-liquid-filter" class="service-card liquid-service" aria-label="服务状态"><p>服务状态</p><div v-for="(value, name) in services" :key="name" class="service-row"><span :class="['signal', value === 'ready' || value === 'connected' ? 'online' : value === 'degraded' ? 'warn' : '']" /><span>{{ name === 'api' ? 'Pilot 服务' : name === 'game' ? '游戏连接' : name === 'recipes' ? '配方树算法' : 'Wiki RAG' }}</span></div><button type="button" class="reconnect" @click="reconnectGame"><RotateCw :size="14" />重新扫描游戏日志</button></LiquidGlass>
   </section>
 </template>

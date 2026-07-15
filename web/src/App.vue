@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { BookOpen, Heart, Link2, MessageSquareMore, Pickaxe, Settings2 } from "lucide-vue-next";
+import LiquidGlass from "@/components/LiquidGlass.vue";
 
 const route = useRoute();
 const links = [
@@ -16,7 +17,7 @@ const links = [
   <div class="ambient ambient-a" aria-hidden="true" />
   <div class="ambient ambient-b" aria-hidden="true" />
   <div class="app-frame">
-    <header class="topbar liquid-topbar">
+    <LiquidGlass as="header" filter-id="topbar-liquid-filter" class="topbar liquid-topbar">
       <RouterLink class="brand" to="/" aria-label="Minecraft Pilot 首页">
         <img class="brand-logo" src="https://github.com/user-attachments/assets/880c6c14-bf9f-43e6-a8b1-08a37830af9e" alt="" />
         <span><strong>Minecraft Pilot</strong><small>Java 26.2 · Agent</small></span>
@@ -29,7 +30,7 @@ const links = [
       <a class="support-link" href="https://github.com/brofea/mc-pilot#" target="_blank" rel="noreferrer">
         <Heart :size="16" fill="currentColor" /> 支持项目
       </a>
-    </header>
+    </LiquidGlass>
     <main id="main-content" tabindex="-1"><RouterView /></main>
     <nav aria-label="移动端主导航" class="mobile-nav">
       <RouterLink v-for="link in links" :key="link.to" :to="link.to" class="mobile-nav-link">
