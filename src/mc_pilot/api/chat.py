@@ -4,21 +4,65 @@ from __future__ import annotations
 
 import json
 import logging
+import math
+import time
+from collections import deque
+from collections.abc import Callable
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from mc_pilot.agent.limits import MAX_USER_MESSAGE_CHARS, USER_MESSAGE_TOO_LONG_RESPONSE
 from mc_pilot.agent.service import AgentService
 from mc_pilot.storage.sqlite import ConversationStore
 
 logger = logging.getLogger(__name__)
+CHAT_REQUESTS_PER_MINUTE = 20
+CHAT_RATE_WINDOW_SECONDS = 60.0
 
 
 class ChatRequest(BaseModel):
     message: str
     conversation_id: str = ""
+
+
+class ChatRateLimiter:
+    """Small in-memory sliding-window limiter for local chat endpoints."""
+
+    def __init__(
+        self,
+        *,
+        maximum_requests: int = CHAT_REQUESTS_PER_MINUTE,
+        window_seconds: float = CHAT_RATE_WINDOW_SECONDS,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self._maximum_requests = maximum_requests
+        self._window_seconds = window_seconds
+        self._clock = clock
+        self._requests: dict[str, deque[float]] = {}
+
+    def retry_after_seconds(self, client_key: str) -> int | None:
+        """Record one request and return a retry delay when its window is full."""
+
+        now = self._clock()
+        self._discard_expired(now)
+        timestamps = self._requests.setdefault(client_key, deque())
+        if len(timestamps) >= self._maximum_requests:
+            return max(1, math.ceil(self._window_seconds - (now - timestamps[0])))
+        timestamps.append(now)
+        return None
+
+    def _discard_expired(self, now: float) -> None:
+        expired_keys: list[str] = []
+        for key, timestamps in self._requests.items():
+            while timestamps and now - timestamps[0] >= self._window_seconds:
+                timestamps.popleft()
+            if not timestamps:
+                expired_keys.append(key)
+        for key in expired_keys:
+            del self._requests[key]
 
 
 def create_chat_router(
@@ -28,11 +72,27 @@ def create_chat_router(
     wiki_service: Any = None,
 ) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["chat"])
+    rate_limiter = ChatRateLimiter()
+
+    def validate_chat_request(body: ChatRequest, request: Request) -> None:
+        """Reject oversized or bursty requests before they consume model budget."""
+
+        if not body.message.strip():
+            raise HTTPException(status_code=400, detail="消息不能为空")
+        if len(body.message) > MAX_USER_MESSAGE_CHARS:
+            raise HTTPException(status_code=413, detail=USER_MESSAGE_TOO_LONG_RESPONSE)
+        client_key = request.client.host if request.client else "unknown"
+        retry_after = rate_limiter.retry_after_seconds(client_key)
+        if retry_after is not None:
+            raise HTTPException(
+                status_code=429,
+                detail="请求过于频繁，请稍后再试。",
+                headers={"Retry-After": str(retry_after)},
+            )
 
     @router.post("/chat")
     async def chat(body: ChatRequest, request: Request) -> dict[str, object]:
-        if not body.message.strip():
-            raise HTTPException(status_code=400, detail="消息不能为空")
+        validate_chat_request(body, request)
         try:
             result = await agent_service.handle_pilot(body.message)
         except Exception as exc:
@@ -58,8 +118,7 @@ def create_chat_router(
 
     @router.post("/chat/stream")
     async def chat_stream(body: ChatRequest, request: Request) -> StreamingResponse:
-        if not body.message.strip():
-            raise HTTPException(status_code=400, detail="消息不能为空")
+        validate_chat_request(body, request)
 
         user_message = body.message
 

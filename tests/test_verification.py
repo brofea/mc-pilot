@@ -6,6 +6,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from mc_pilot.agent.limits import MAX_USER_MESSAGE_CHARS
 from mc_pilot.agent.memory import ConversationMemory
 from mc_pilot.agent.models import AgentState
 from mc_pilot.agent.tools import TOOL_WHITELIST
@@ -18,6 +19,14 @@ from mc_pilot.recipes.models import RecipeInfo
 def test_chat_route_rejects_empty_message(client: TestClient) -> None:
     resp = client.post("/api/chat", json={"message": ""})
     assert resp.status_code == 400
+
+
+def test_chat_route_rejects_oversized_message_before_model_inference(
+    client: TestClient,
+) -> None:
+    resp = client.post("/api/chat", json={"message": "西" * (MAX_USER_MESSAGE_CHARS + 1)})
+
+    assert resp.status_code == 413
 
 
 def test_recipes_direct_route_works(client: TestClient) -> None:

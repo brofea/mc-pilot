@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any, Protocol
 
 from mc_pilot.agent.client import ChatResponse, DeepSeekClient
+from mc_pilot.agent.limits import MAX_USER_MESSAGE_CHARS, USER_MESSAGE_TOO_LONG_RESPONSE
 from mc_pilot.agent.memory import ConversationMemory
 from mc_pilot.agent.models import (
     AgentResponse,
@@ -79,6 +80,11 @@ class AgentLoop:
             await self._on_event(event_type, data)
 
     async def run(self, user_message: str) -> AgentResponse:
+        if len(user_message) > MAX_USER_MESSAGE_CHARS:
+            self._add_trace(AgentState.answered, "message_too_long")
+            await self._emit("done", {"answer": USER_MESSAGE_TOO_LONG_RESPONSE})
+            return self._respond(USER_MESSAGE_TOO_LONG_RESPONSE, AgentState.answered)
+
         self._memory.strip_tool_context()
         self._memory.add_user(user_message)
         self._add_trace(AgentState.received, "user_message_received")

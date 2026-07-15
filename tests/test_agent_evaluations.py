@@ -6,11 +6,12 @@ import asyncio
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
 from mc_pilot.agent.client import ChatChoice, ChatResponse
+from mc_pilot.agent.limits import MAX_USER_MESSAGE_CHARS, USER_MESSAGE_TOO_LONG_RESPONSE
 from mc_pilot.agent.loop import AgentLoop
 from mc_pilot.agent.memory import ConversationMemory
 from mc_pilot.agent.policy import (
@@ -76,7 +77,7 @@ class ScriptedClient:
 
 
 def _load_cases() -> list[dict[str, Any]]:
-    return json.loads(_CASES_PATH.read_text(encoding="utf-8"))
+    return cast(list[dict[str, Any]], json.loads(_CASES_PATH.read_text(encoding="utf-8")))
 
 
 @pytest.mark.parametrize("case", _load_cases(), ids=lambda case: str(case["id"]))
@@ -147,3 +148,23 @@ def test_conversational_status_does_not_disclose_runtime_details() -> None:
     assert "SENTINEL_API_KEY" not in status
     assert "SENTINEL_MODEL" not in status
     assert "internal.example.invalid" not in status
+
+
+def test_oversized_message_never_reaches_the_model() -> None:
+    client = ScriptedClient([])
+
+    async def tool_executor(name: str, arguments: dict[str, Any]) -> str:
+        del name, arguments
+        return "不应调用"
+
+    loop = AgentLoop(
+        client=client,
+        memory=ConversationMemory(),
+        tool_executor=tool_executor,
+        exported_tools=[],
+    )
+
+    response = asyncio.run(loop.run("西" * (MAX_USER_MESSAGE_CHARS + 1)))
+
+    assert response.answer == USER_MESSAGE_TOO_LONG_RESPONSE
+    assert client.calls == []

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import logging
 
+from mc_pilot.agent.limits import DAILY_TOKEN_LIMIT
 from mc_pilot.agent.models import AgentTurn, ToolResult
 from mc_pilot.agent.policy import SYSTEM_PROMPT, format_untrusted_tool_result
 
 logger = logging.getLogger(__name__)
 
 MAX_TURNS = 12
-DAILY_TOKEN_LIMIT = 500_000
 
 
 class ConversationMemory:
