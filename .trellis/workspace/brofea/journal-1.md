@@ -245,3 +245,45 @@ Added a reusable SVG-displacement Liquid Glass surface for the desktop top bar, 
 ### Next Steps
 
 - None - task complete
+
+
+## Session 8: 完成移动端导航与布局适配
+
+**Date**: 2026-07-15
+**Task**: 完成移动端导航与布局适配
+**Branch**: `main`
+
+### Summary
+
+实现移动端侧滑导航、抽屉会话列表与输入栏安全边距；桌面侧栏服务状态调整为紧凑分区，并补充 Firefox SVG 液态玻璃与 Safari 原生毛玻璃回退。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ff77e8c` | (see git log) |
+| `42e483a` | (see git log) |
+| `4a5c01d` | (see git log) |
+| `6dd9da7` | (see git log) |
+| `f15d0ab` | (see git log) |
+| `f0eaea3` | (see git log) |
+| `eb6c24a` | (see git log) |
+| `aa767a6` | (see git log) |
+| `b7d8464` | (see git log) |
+| `a3235aa` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
+- **Total Sessions**: 8
 - **Last Active**: 2026-07-15
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~247 | Active |
+| `journal-1.md` | ~289 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 8 | 2026-07-15 | 完成移动端导航与布局适配 | `ff77e8c`, `42e483a`, `4a5c01d`, `6dd9da7`, `f15d0ab`, `f0eaea3`, `eb6c24a`, `aa767a6`, `b7d8464`, `a3235aa` | `main` |
 | 7 | 2026-07-15 | Liquid Glass surfaces | `dfffa7a` | `main` |
 | 6 | 2026-07-14 | Vue frontend redesign handoff | `15463b6` | `main` |
 | 5 | 2026-07-14 | Status Indicators, Docker CI, Thinking UX & Stability Fixes | `5ae0872`, `43b5fb0`, `b063c79`, `ec6e013`, `f51cb3e`, `a2dae35` | `main` |
