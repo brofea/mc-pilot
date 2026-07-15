@@ -5,7 +5,7 @@
 @media(min-width:901px){
   .conversation-rail{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto}
   .conversation-rail>.conversation-list{min-height:0}
-  .conversation-rail>.service-card{position:static;left:auto;bottom:auto;width:245px;max-width:100%;height:auto;min-height:0;margin:0;align-self:end;overflow:visible}
+  .conversation-rail>.service-status{width:245px;max-width:100%;margin:0;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--line),transparent 20%);align-self:end}
 }
 
 @media(max-width:900px){
