@@ -1,5 +1,5 @@
 <div align="center">
-    <img width="200" alt="icon" src="https://github.com/user-attachments/assets/880c6c14-bf9f-43e6-a8b1-08a37830af9e" />
+    <img width="200" alt="icon" src="https://github.com/user-attachments/assets/4055892f-80a1-4890-8948-030f1ceed5ba" />
     <h1>Minecraft Pilot Agent</h1>
     <p>为 MC 26.x 打造的 AI 游戏助手</p>
     <p>
