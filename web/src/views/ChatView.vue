@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
-import { RouterLink } from "vue-router";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import { Plus, Send, Sparkles, Trash2, Wifi, WifiOff, X } from "lucide-vue-next";
+import { Plus, Send, Sparkles, Trash2, Wifi, WifiOff } from "lucide-vue-next";
 import { api, type Conversation, type Message, type StreamEvent } from "@/lib/api";
 import LiquidGlass from "@/components/LiquidGlass.vue";
 import ServiceStatus from "@/components/ServiceStatus.vue";
 import { mobileDrawerKey } from "@/lib/mobileDrawer";
-import { navigationLinks } from "@/lib/navigation";
 
 type Trace = { label: string; detail: string; done: boolean; success?: boolean };
 const conversations = ref<Conversation[]>([]); const activeId = ref(""); const messages = ref<Message[]>([]);
@@ -48,13 +46,8 @@ onMounted(async () => { try { await refresh(); await refreshServices(); connect(
 
 <template>
   <section class="chat-layout">
-    <div v-if="mobileDrawerOpen" class="mobile-drawer-layer">
-      <button class="mobile-drawer-backdrop" type="button" aria-label="关闭菜单" @click="closeMobileDrawer" />
-      <LiquidGlass id="mobile-navigation-drawer" as="aside" filter-id="mobile-navigation-liquid-filter" class="mobile-drawer" :frost="0.86" role="dialog" aria-modal="true" aria-label="主菜单">
-        <header class="mobile-drawer-header"><span>导航</span><button type="button" aria-label="关闭菜单" @click="closeMobileDrawer"><X :size="22" /></button></header>
-        <nav aria-label="移动端主导航" class="mobile-drawer-nav">
-          <RouterLink v-for="link in navigationLinks" :key="link.to" :to="link.to" class="nav-link" @click="closeMobileDrawer"><component :is="link.icon" :size="18" /><span>{{ link.label }}</span></RouterLink>
-        </nav>
+    <Teleport v-if="mobileDrawerOpen" to="#mobile-drawer-content">
+      <div class="mobile-drawer-chat-content">
         <div class="mobile-drawer-conversations">
           <button class="primary-action" type="button" @click="newChat(); closeMobileDrawer()"><Plus :size="18" />新对话</button>
           <p class="rail-label">最近对话</p>
@@ -62,9 +55,9 @@ onMounted(async () => { try { await refresh(); await refreshServices(); connect(
             <button v-for="item in conversations" :key="item.id" type="button" class="conversation" :class="{ active: item.id === activeId }" @click="select(item); closeMobileDrawer()"><span>{{ item.title || "新对话" }}</span><Trash2 :size="15" class="delete" @click.stop="remove(item.id)" aria-label="删除对话" /></button>
           </div>
         </div>
-        <ServiceStatus class="mobile-service-card" :services="services" @reconnect="reconnectGame" />
-      </LiquidGlass>
-    </div>
+        <ServiceStatus :services="services" @reconnect="reconnectGame" />
+      </div>
+    </Teleport>
     <aside class="conversation-rail" aria-label="对话历史">
       <button class="primary-action" type="button" @click="newChat"><Plus :size="18" />新对话</button>
       <p class="rail-label">最近对话</p>

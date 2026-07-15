@@ -34,14 +34,15 @@ watch(route, closeMobileDrawer);
         <Heart :size="16" fill="currentColor" /> 支持项目
       </a>
     </LiquidGlass>
-    <div v-if="mobileDrawerOpen && route.path !== '/'" class="mobile-drawer-layer">
+    <div v-if="mobileDrawerOpen" class="mobile-drawer-layer">
       <button class="mobile-drawer-backdrop" type="button" aria-label="关闭菜单" @click="closeMobileDrawer" />
-      <LiquidGlass id="mobile-navigation-drawer" as="aside" filter-id="mobile-navigation-liquid-filter" class="mobile-drawer" :frost="0.86" role="dialog" aria-modal="true" aria-label="主菜单">
+      <aside id="mobile-navigation-drawer" class="mobile-drawer" role="dialog" aria-modal="true" aria-label="主菜单">
         <header class="mobile-drawer-header"><span>导航</span><button type="button" aria-label="关闭菜单" @click="closeMobileDrawer"><X :size="22" /></button></header>
         <nav aria-label="移动端主导航" class="mobile-drawer-nav">
           <RouterLink v-for="link in navigationLinks" :key="link.to" :to="link.to" class="nav-link" @click="closeMobileDrawer"><component :is="link.icon" :size="18" /><span>{{ link.label }}</span></RouterLink>
         </nav>
-      </LiquidGlass>
+        <div id="mobile-drawer-content" />
+      </aside>
     </div>
     <main id="main-content" tabindex="-1"><RouterView /></main>
   </div>
