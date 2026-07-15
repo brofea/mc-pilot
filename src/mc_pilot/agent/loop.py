@@ -6,9 +6,9 @@ import json
 import logging
 import time
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import Any, Protocol
 
-from mc_pilot.agent.client import DeepSeekClient
+from mc_pilot.agent.client import ChatResponse, DeepSeekClient
 from mc_pilot.agent.memory import ConversationMemory
 from mc_pilot.agent.models import (
     AgentResponse,
@@ -19,6 +19,7 @@ from mc_pilot.agent.models import (
     ToolResult,
     TraceEntry,
 )
+from mc_pilot.agent.policy import blocked_response
 from mc_pilot.agent.tools import TOOL_WHITELIST
 
 logger = logging.getLogger(__name__)
@@ -29,10 +30,21 @@ type ToolExecutor = Callable[[str, dict[str, Any]], Awaitable[str]]
 type EventEmitter = Callable[[str, dict[str, Any]], Awaitable[None]] | None
 
 
+class ChatClient(Protocol):
+    """Minimal model client contract required by the agent loop."""
+
+    async def chat(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        tools: list[dict[str, Any]] | None = None,
+    ) -> ChatResponse: ...
+
+
 class AgentLoop:
     """Drives the agent state machine: received → deciding → tool_running → ..."""
 
-    _client: DeepSeekClient
+    _client: ChatClient
     _memory: ConversationMemory
     _tool_executor: ToolExecutor
     _exported_tools: list[ToolMessage]
@@ -45,7 +57,7 @@ class AgentLoop:
 
     def __init__(
         self,
-        client: DeepSeekClient,
+        client: ChatClient,
         memory: ConversationMemory,
         tool_executor: ToolExecutor,
         exported_tools: list[ToolMessage],
@@ -71,6 +83,13 @@ class AgentLoop:
         self._memory.add_user(user_message)
         self._add_trace(AgentState.received, "user_message_received")
         self._state = AgentState.received
+
+        safety_response = blocked_response(user_message)
+        if safety_response:
+            self._add_trace(AgentState.answered, "safety_boundary_enforced")
+            self._memory.add_assistant(safety_response)
+            await self._emit("done", {"answer": safety_response})
+            return self._respond(safety_response, AgentState.answered)
 
         if self._memory.is_over_budget:
             self._stop_reason = "每日 token 预算已用尽"

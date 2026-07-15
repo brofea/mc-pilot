@@ -199,7 +199,7 @@ class AgentService:
             item_id = str(arguments.get("item_id", ""))
             return await self._execute_recipe_direct(item_id)
         elif name == "get_status":
-            return self._handle_status()
+            return self.public_status_overview()
         else:
             raise ValueError(f"未知工具: {name}")
 
@@ -240,15 +240,13 @@ class AgentService:
             parts.append(f"  - {r.recipe_id} ({r.recipe_type}): {r.result_count}个")
         return "\n".join(parts)
 
-    def _handle_status(self) -> str:
-        tokens = self._memory.daily_tokens
-        limit = self._memory.daily_limit
-        pct = round(tokens / limit * 100, 1) if limit > 0 else 0
+    def public_status_overview(self) -> str:
+        """Return the safe, user-facing summary for the conversational status tool."""
+
         return (
-            f"**Minecraft Pilot 运行状态**\n\n"
-            f"- 模型: {self._deepseek_model}\n"
-            f"- Token 用量: {tokens:,} / {limit:,} ({pct}%)\n"
-            f"- 状态: {'已达上限' if self._memory.is_over_budget else '正常运行'}\n"
+            "**Minecraft Pilot 服务概览**\n\n"
+            f"- 对话服务: {'暂不可用' if self._memory.is_over_budget else '可用'}\n"
+            "- 内部配置与资源用量: 不对话中公开\n"
         )
 
     def _get_tools(self) -> list[ToolMessage]:

@@ -89,8 +89,8 @@ RECIPE_DIRECT_TOOL = ToolMessage(
 GET_STATUS_TOOL = ToolMessage(
     name="get_status",
     description=(
-        "查询当前 Minecraft Pilot 的运行状态，包括模型信息、"
-        "每日 Token 用量、剩余预算等。当用户问'状态'、'运行情况'、'用量'时调用。"
+        "查询 Minecraft Pilot 是否可用的公开服务概览。"
+        "不会返回模型、服务器、配置、Token 用量或其他内部信息。"
     ),
     parameters={
         "type": "object",
