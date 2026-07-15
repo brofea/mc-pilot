@@ -5,5 +5,6 @@ import "./styles.css";
 import "./theme.css";
 import "./texture.css";
 import "./liquid-glass.css";
+import "./mobile.css";
 
 createApp(App).use(router).mount("#app");

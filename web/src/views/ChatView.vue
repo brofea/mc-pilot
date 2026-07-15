@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { RouterLink } from "vue-router";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import { Plus, RotateCw, Send, Sparkles, Trash2, Wifi, WifiOff } from "lucide-vue-next";
+import { Plus, Send, Sparkles, Trash2, Wifi, WifiOff, X } from "lucide-vue-next";
 import { api, type Conversation, type Message, type StreamEvent } from "@/lib/api";
 import LiquidGlass from "@/components/LiquidGlass.vue";
+import ServiceStatus from "@/components/ServiceStatus.vue";
+import { mobileDrawerKey } from "@/lib/mobileDrawer";
+import { navigationLinks } from "@/lib/navigation";
 
 type Trace = { label: string; detail: string; done: boolean; success?: boolean };
 const conversations = ref<Conversation[]>([]); const activeId = ref(""); const messages = ref<Message[]>([]);
 const draft = ref(""); const loading = ref(false); const status = ref("Pilot 已就位"); const traces = ref<Trace[]>([]);
 const game = ref<Record<string, unknown>>({ state: "disconnected" }); const error = ref(""); const expanded = ref(false); let socket: WebSocket | undefined;
 const services = ref({ api: "connecting", game: "disconnected", recipes: "connecting", rag: "connecting" });
+const drawer = inject(mobileDrawerKey);
+if (!drawer) throw new Error("Mobile drawer state is not available");
+const mobileDrawerOpen = computed(() => drawer.open.value);
+const closeMobileDrawer = drawer.close;
 const markdown = (value: string) => DOMPurify.sanitize(marked.parse(value) as string);
 const activeTitle = computed(() => conversations.value.find((item) => item.id === activeId.value)?.title ?? "新对话");
 async function refresh() { conversations.value = await api.listConversations(); }
@@ -40,6 +48,23 @@ onMounted(async () => { try { await refresh(); await refreshServices(); connect(
 
 <template>
   <section class="chat-layout">
+    <div v-if="mobileDrawerOpen" class="mobile-drawer-layer">
+      <button class="mobile-drawer-backdrop" type="button" aria-label="关闭菜单" @click="closeMobileDrawer" />
+      <LiquidGlass id="mobile-navigation-drawer" as="aside" filter-id="mobile-navigation-liquid-filter" class="mobile-drawer" :frost="0.86" role="dialog" aria-modal="true" aria-label="主菜单">
+        <header class="mobile-drawer-header"><span>导航</span><button type="button" aria-label="关闭菜单" @click="closeMobileDrawer"><X :size="22" /></button></header>
+        <nav aria-label="移动端主导航" class="mobile-drawer-nav">
+          <RouterLink v-for="link in navigationLinks" :key="link.to" :to="link.to" class="nav-link" @click="closeMobileDrawer"><component :is="link.icon" :size="18" /><span>{{ link.label }}</span></RouterLink>
+        </nav>
+        <div class="mobile-drawer-conversations">
+          <button class="primary-action" type="button" @click="newChat(); closeMobileDrawer()"><Plus :size="18" />新对话</button>
+          <p class="rail-label">最近对话</p>
+          <div class="conversation-list">
+            <button v-for="item in conversations" :key="item.id" type="button" class="conversation" :class="{ active: item.id === activeId }" @click="select(item); closeMobileDrawer()"><span>{{ item.title || "新对话" }}</span><Trash2 :size="15" class="delete" @click.stop="remove(item.id)" aria-label="删除对话" /></button>
+          </div>
+        </div>
+        <ServiceStatus class="mobile-service-card" :services="services" @reconnect="reconnectGame" />
+      </LiquidGlass>
+    </div>
     <aside class="conversation-rail" aria-label="对话历史">
       <button class="primary-action" type="button" @click="newChat"><Plus :size="18" />新对话</button>
       <p class="rail-label">最近对话</p>
@@ -48,6 +73,7 @@ onMounted(async () => { try { await refresh(); await refreshServices(); connect(
           <span>{{ item.title || "新对话" }}</span><Trash2 :size="15" class="delete" @click.stop="remove(item.id)" aria-label="删除对话" />
         </button>
       </div>
+      <ServiceStatus :services="services" @reconnect="reconnectGame" />
     </aside>
     <div class="chat-stage">
       <header class="page-intro"><p class="eyebrow">AGENT WORKSPACE</p><h1>{{ activeTitle }}</h1><p>从配方到 Wiki，让 Pilot 和你一起探索。</p></header>
@@ -59,6 +85,5 @@ onMounted(async () => { try { await refresh(); await refreshServices(); connect(
       <p v-if="error" class="error-note" role="alert">{{ error }}</p>
       <LiquidGlass as="form" filter-id="composer-liquid-filter" class="composer liquid-composer" @submit.prevent="send"><label class="sr-only" for="prompt">向 Pilot 提问</label><textarea id="prompt" v-model="draft" :disabled="loading" rows="1" placeholder="问问 Minecraft 世界…" @keydown.enter.exact.prevent="send" /><button class="send-button" type="submit" :disabled="loading || !draft.trim()" aria-label="发送"><Send :size="18" /></button></LiquidGlass>
     </div>
-    <LiquidGlass as="section" filter-id="service-liquid-filter" class="service-card liquid-service" aria-label="服务状态"><p>服务状态</p><div v-for="(value, name) in services" :key="name" class="service-row"><span :class="['signal', value === 'ready' || value === 'connected' ? 'online' : value === 'degraded' ? 'warn' : '']" /><span>{{ name === 'api' ? 'Pilot 服务' : name === 'game' ? '游戏连接' : name === 'recipes' ? '配方树算法' : 'Wiki RAG' }}</span></div><button type="button" class="reconnect" @click="reconnectGame"><RotateCw :size="14" />重新扫描游戏日志</button></LiquidGlass>
   </section>
 </template>

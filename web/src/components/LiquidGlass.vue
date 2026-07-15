@@ -19,7 +19,7 @@ const liquidGlassConfig = {
   border: 0.07
 } as const;
 
-const props = withDefaults(defineProps<{ as?: string; filterId: string }>(), { as: "div" });
+const props = withDefaults(defineProps<{ as?: string; filterId: string; frost?: number }>(), { as: "div" });
 
 const surface = ref<HTMLElement>();
 const width = ref(1);
@@ -50,7 +50,7 @@ onBeforeUnmount(() => observer?.disconnect());
 </script>
 
 <template>
-  <component :is="as" ref="surface" class="liquid-glass" :style="{ '--liquid-filter': `url(#${filterId})`, '--liquid-frost': liquidGlassConfig.frost, '--liquid-saturation': liquidGlassConfig.saturation }">
+  <component :is="as" ref="surface" class="liquid-glass" :style="{ '--liquid-filter': `url(#${filterId})`, '--liquid-frost': props.frost ?? liquidGlassConfig.frost, '--liquid-saturation': liquidGlassConfig.saturation }">
     <svg class="liquid-glass-filter" aria-hidden="true" focusable="false">
       <defs>
         <filter :id="filterId" color-interpolation-filters="sRGB">
